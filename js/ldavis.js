@@ -624,7 +624,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             topicLabel.setAttribute("for", topicID);
             topicLabel.setAttribute("style", "font-family: sans-serif; font-size: 14px");
             //topicLabel.innerHTML = "Selected Topic: <span id='" + topicID + "-value'></span>";
-            topicLabel.innerHTML = "Selected Topic test3: <span id='" + topicID + "-value'></span>";
+            topicLabel.innerHTML = "Selected Topic test7: <span id='" + topicID + "-value'></span>";
             topicDiv.appendChild(topicLabel);
 
             var topicInput = document.createElement("input");
@@ -1064,17 +1064,16 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             // Create a group for the most presentative docs
             var docSection= d3.select("#docSection")
                 //.append("div")
-                .selectAll("p")
+                .selectAll("div")
                 .data( d.sentiment_mean[1] )
                 .enter()
-            docSection.append("p")
+            docSection.append("div")
                 .attr("class", "RepDocs")
                 .attr("fill", "black")
-                .attr("x", -5)
-                .attr("y", 10)
+                .style("word-break", "break-word")
+                .style("margin-bottom","10px")
                 .text(function(d) { return d })
-                .append('br');
-            
+     
             // d3.select("#docSection")
             //     .append("rect")
             //     .attr("width", "300px")
