@@ -169,7 +169,6 @@ def prepared_data_to_html(data, d3_url=None, ldavis_url=None, ldavis_css_url=Non
         visid = 'ldavis_' + get_id(data) + str(int(random.random() * 1E10))
     elif re.search(r'\s', visid):
         raise ValueError("visid must not contain spaces")
-
     return template.render(visid=json.dumps(visid),
                            visid_raw=visid,
                            d3_url=d3_url,

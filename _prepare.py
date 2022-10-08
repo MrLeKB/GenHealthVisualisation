@@ -194,10 +194,10 @@ def _topic_coordinates(sentiment_df,mds, topic_term_dists, topic_proportion, sta
     mds_df = pd.DataFrame({'x': mds_res[:, 0], 'y': mds_res[:, 1],
                            'topics': range(start_index, K + start_index),
                            'cluster': 1, 'Freq': topic_proportion * 100
-                           , 'sentiment_mean':sentiment_df[0]
-                           , 'sentiment_pos':sentiment_df[1]
-                           , 'sentiment_neu':sentiment_df[2]
-                           , 'sentiment_neg':sentiment_df[3]
+                           , 'sentiment_mean':sentiment_df["mean"]
+                           , 'sentiment_pos':sentiment_df["pos"]
+                           , 'sentiment_neu':sentiment_df["neu"]
+                           , 'sentiment_neg':sentiment_df["neg"]
                            })
     # note: cluster (should?) be deprecated soon. See: https://github.com/cpsievert/LDAvis/issues/26
     return mds_df

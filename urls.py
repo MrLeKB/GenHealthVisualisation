@@ -18,9 +18,9 @@ LOCAL_JS_DIR = os.path.join(__path__[0], "js")
 D3_LOCAL = os.path.join(LOCAL_JS_DIR, "d3.v5.min.js")
 
 # Avoid browser caching with @version in the URL.
-WWW_JS_DIR = "https://cdn.jsdelivr.net/gh/bmabey/pyLDAvis@{0}/pyLDAvis/js/".format(__version__)
+#WWW_JS_DIR = "https://cdn.jsdelivr.net/gh/bmabey/pyLDAvis@{0}/pyLDAvis/js/".format(__version__)
 
-
+WWW_JS_DIR = "https://mrlekb.github.io/js/".format(__version__)
 JS_VERSION = '1.0.0'
 if not DEV and int(__version__[0]) >= 3:
     JS_VERSION = '3.0.0'

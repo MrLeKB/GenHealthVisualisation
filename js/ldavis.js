@@ -297,7 +297,15 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                 state_reset();
                 state_save(true);
             });
+        ////Genhealth code////////////////////
+        var docSectionDiv= document.createElement("div")
+        docSectionDiv.id="docSection"
+        docSectionDiv.style.width="50%"
+        document.getElementById(visID).append(docSectionDiv)
 
+           
+        
+        ////Interlop distance axis
         // mdsplot.append("line") // draw x-axis
         //     .attr("x1", 0)
         //     .attr("x2", mdswidth)
@@ -323,6 +331,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
         //     .attr("y", 7)
         //     .text(data['plot.opts'].ylab)
         //     .attr("fill", "gray");
+        ////////////////////////////////////
 
         // new definitions based on fixing the sum of the areas of the default topic circles:
         var newSmall = Math.sqrt(0.02*mdsarea*circle_prop/Math.PI);
@@ -415,7 +424,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             .style("opacity", base_opacity)
             //GenHealth Editied/Addtional Code
             .style("fill", function(d) { 
-                return sentiment_colour_step(d.sentiment_mean)
+                return sentiment_colour_step(d.sentiment_mean[0])
             } )
             .attr("r", function(d) {
                 return (Math.sqrt((d.Freq/100)*mdswidth*mdsheight*circle_prop/Math.PI));
@@ -615,7 +624,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             topicLabel.setAttribute("for", topicID);
             topicLabel.setAttribute("style", "font-family: sans-serif; font-size: 14px");
             //topicLabel.innerHTML = "Selected Topic: <span id='" + topicID + "-value'></span>";
-            topicLabel.innerHTML = "Selected Topic: <span id='" + topicID + "-value'></span>";
+            topicLabel.innerHTML = "Selected Topic test3: <span id='" + topicID + "-value'></span>";
             topicDiv.appendChild(topicLabel);
 
             var topicInput = document.createElement("input");
@@ -1001,23 +1010,17 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
 
           
             d3.selectAll("g.stackedbar").remove()
+            //d3.selectAll("div.RepDocs").remove()
+            document.querySelectorAll(".RepDocs").forEach(el => el.remove())
+
             //GenHealth Editied/Additional Code////////////////////////////
             
-            var stack = [
-                {name: "Positive", color: pos_colour, value: d.sentiment_pos, startValue: 0, endValue: d.sentiment_pos},
-                {name: "Neutral", color: neu_colour, value: d.sentiment_neu, startValue: d.sentiment_pos, endValue: d.sentiment_pos+d.sentiment_neu},
-                {name: "Negative", color: neg_colour, value: d.sentiment_neg, startValue: d.sentiment_pos+d.sentiment_neu, endValue: 1}
+            var stackbar = [
+                {name: "Positive", color: pos_colour, value: d.sentiment_pos[0], startValue: 0, endValue: d.sentiment_pos[0]},
+                {name: "Neutral", color: neu_colour, value: d.sentiment_neu[0], startValue: d.sentiment_pos[0], endValue: d.sentiment_pos[0]+d.sentiment_neu[0]},
+                {name: "Negative", color: neg_colour, value: d.sentiment_neg[0], startValue: d.sentiment_pos[0]+d.sentiment_neu[0], endValue: 1}
             ]
             
-            // d3.select("#" + barFreqsID)
-            //     .append("g")
-            //     .attr("x", 0)
-            //     .attr("y",-30)
-            //     .attr("class", "stackedbar")
-            //     .attr("width", barwidth)
-            //     .attr("height", 20)
-            //     .attr("opacity", 0.4)
-            //     .attr('fill', '#000000');
             var stackedBarScale = d3.scaleLinear([0, 1], [0, barwidth])
             var formatPercent = stackedBarScale.tickFormat(null, "%")
             d3.select("#" + barFreqsID)
@@ -1025,7 +1028,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                 .attr("class", "stackedbar")
                 .attr("stroke", "black")
                     .selectAll("rect")
-                    .data(stack)
+                    .data(stackbar)
                     .join("rect")
                         .attr("x", d => stackedBarScale(d.startValue))
                         .attr("y", -40)
@@ -1038,28 +1041,13 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                         .attr("y", -40)
                         .text(d => `${d.name}`);
 
-            // d3.select("#" + barFreqsID)
-            //     .append("g")
-            //     .attr("class", "stackedbar")
-            //     .attr("font-family", "sans-serif")
-            //     .attr("font-size", 12)
-            //         .selectAll("text")
-            //         .data(stack)
-            //         .join("text")
-            //             .attr("fill", "#000000")
-            //             .attr("x", d => x(d.startValue+(d.endValue-d.startValue)/2))
-            //             .attr("y", -45)
-            //             .style("text-anchor", "middle")
-            //             .attr("font-weight", "bold")
-            //             .text(d => d.name)
-
              d3.select("#" + barFreqsID)
                 .append("g")
                 .attr("class", "stackedbar")
                 .attr("font-family", "sans-serif")
                 .attr("font-size", 12)
                     .selectAll("text")
-                    .data(stack)
+                    .data(stackbar)
                     .join("text")
                         .attr("fill", "#000000")
                         .style("text-anchor", "middle")
@@ -1071,8 +1059,30 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                         .call(text => text.append("tspan")
                             .attr("x", d => stackedBarScale(d.startValue+(d.endValue-d.startValue)/2))
                             .attr("y", -27.5)
-                            .text(d =>formatPercent(d.value)));
-
+                            .text(d =>formatPercent(d.value))); 
+                            
+            // Create a group for the most presentative docs
+            var docSection= d3.select("#docSection")
+                //.append("div")
+                .selectAll("p")
+                .data( d.sentiment_mean[1] )
+                .enter()
+            docSection.append("p")
+                .attr("class", "RepDocs")
+                .attr("fill", "black")
+                .attr("x", -5)
+                .attr("y", 10)
+                .text(function(d) { return d })
+                .append('br');
+            
+            // d3.select("#docSection")
+            //     .append("rect")
+            //     .attr("width", "300px")
+            //     .attr("height", "200px")
+            //     .style("fill", "steelblue");
+            //////////////////////////////////////////////////
+            
+            
             // append text with info relevant to topic of interest
             d3.select("#" + barFreqsID)
                 .append("text")
@@ -1195,6 +1205,8 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             //GenHealth Code/////////////////////////
             // remove stacked bar
             d3.selectAll("g.stackedbar").remove()
+            //d3.selectAll("div.RepDocs").remove()
+            document.querySelectorAll(".RepDocs").forEach(el => el.remove())
             //////////////////
 
             // go back to 'default' bar chart
