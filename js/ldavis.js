@@ -22,6 +22,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
         vis_state = {
             lambda: 1,
             topic: 0,
+            sentiment:"mean",
             term: ""
         };
 
@@ -45,12 +46,12 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
     var margin = {
             top: 30,
             right: 30,
-            bottom: 70,
+            bottom: 0,
             left: 30
         },
 
         mdswidth = 530,
-        mdsheight = 530,
+        mdsheight = 470,
         barwidth = 530,
         barheight = 530,
         termwidth = 90, // width to add between two panels to display terms
@@ -298,9 +299,12 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                 state_save(true);
             });
         ////Genhealth code////////////////////
+        var docSectionTitle= document.createElement("div")
+        docSectionTitle.id="docSectionTitle"
         var docSectionDiv= document.createElement("div")
         docSectionDiv.id="docSection"
         docSectionDiv.style.width="50%"
+        document.getElementById(visID).append(docSectionTitle)
         document.getElementById(visID).append(docSectionDiv)
 
            
@@ -333,67 +337,67 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
         //     .attr("fill", "gray");
         ////////////////////////////////////
 
-        // new definitions based on fixing the sum of the areas of the default topic circles:
-        var newSmall = Math.sqrt(0.02*mdsarea*circle_prop/Math.PI);
-        var newMedium = Math.sqrt(0.05*mdsarea*circle_prop/Math.PI);
-        var newLarge = Math.sqrt(0.10*mdsarea*circle_prop/Math.PI);
-        var cx = 10 + newLarge,
-            cx2 = cx + 1.5 * newLarge;
+        // // new definitions based on fixing the sum of the areas of the default topic circles:
+        // var newSmall = Math.sqrt(0.02*mdsarea*circle_prop/Math.PI);
+        // var newMedium = Math.sqrt(0.05*mdsarea*circle_prop/Math.PI);
+        // var newLarge = Math.sqrt(0.10*mdsarea*circle_prop/Math.PI);
+        // var cx = 10 + newLarge,
+        //     cx2 = cx + 1.5 * newLarge;
 
-        // circle guide inspired from
-        // http://www.nytimes.com/interactive/2012/02/13/us/politics/2013-budget-proposal-graphic.html?_r=0
-        var circleGuide = function(rSize, size) {
-            d3.select("#" + leftPanelID).append("circle")
-                .attr('class', "circleGuide" + size)
-                .attr('r', rSize)
-                .attr('cx', cx)
-                .attr('cy', mdsheight + rSize)
-                .style('fill', 'none')
-                .style('stroke-dasharray', '2 2')
-                .style('stroke', '#999');
-            d3.select("#" + leftPanelID).append("line")
-                .attr('class', "lineGuide" + size)
-                .attr("x1", cx)
-                .attr("x2", cx2)
-                .attr("y1", mdsheight + 2 * rSize)
-                .attr("y2", mdsheight + 2 * rSize)
-                .style("stroke", "gray")
-                .style("opacity", 0.3);
-        };
+        // // circle guide inspired from
+        // // http://www.nytimes.com/interactive/2012/02/13/us/politics/2013-budget-proposal-graphic.html?_r=0
+        // var circleGuide = function(rSize, size) {
+        //     d3.select("#" + leftPanelID).append("circle")
+        //         .attr('class', "circleGuide" + size)
+        //         .attr('r', rSize)
+        //         .attr('cx', cx)
+        //         .attr('cy', mdsheight + rSize)
+        //         .style('fill', 'none')
+        //         .style('stroke-dasharray', '2 2')
+        //         .style('stroke', '#999');
+        //     d3.select("#" + leftPanelID).append("line")
+        //         .attr('class', "lineGuide" + size)
+        //         .attr("x1", cx)
+        //         .attr("x2", cx2)
+        //         .attr("y1", mdsheight + 2 * rSize)
+        //         .attr("y2", mdsheight + 2 * rSize)
+        //         .style("stroke", "gray")
+        //         .style("opacity", 0.3);
+        // };
 
-        circleGuide(newSmall, "Small");
-        circleGuide(newMedium, "Medium");
-        circleGuide(newLarge, "Large");
+        // circleGuide(newSmall, "Small");
+        // circleGuide(newMedium, "Medium");
+        // circleGuide(newLarge, "Large");
 
-        var defaultLabelSmall = "2%";
-        var defaultLabelMedium = "5%";
-        var defaultLabelLarge = "10%";
+        // var defaultLabelSmall = "2%";
+        // var defaultLabelMedium = "5%";
+        // var defaultLabelLarge = "10%";
 
-        d3.select("#" + leftPanelID).append("text")
-            .attr("x", 10)
-            .attr("y", mdsheight - 10)
-            .attr('class', "circleGuideTitle")
-            .style("text-anchor", "left")
-            .style("fontWeight", "bold")
-            .text("Marginal topic distribution");
-        d3.select("#" + leftPanelID).append("text")
-            .attr("x", cx2 + 10)
-            .attr("y", mdsheight + 2 * newSmall)
-            .attr('class', "circleGuideLabelSmall")
-            .style("text-anchor", "start")
-            .text(defaultLabelSmall);
-        d3.select("#" + leftPanelID).append("text")
-            .attr("x", cx2 + 10)
-            .attr("y", mdsheight + 2 * newMedium)
-            .attr('class', "circleGuideLabelMedium")
-            .style("text-anchor", "start")
-            .text(defaultLabelMedium);
-        d3.select("#" + leftPanelID).append("text")
-            .attr("x", cx2 + 10)
-            .attr("y", mdsheight + 2 * newLarge)
-            .attr('class', "circleGuideLabelLarge")
-            .style("text-anchor", "start")
-            .text(defaultLabelLarge);
+        // d3.select("#" + leftPanelID).append("text")
+        //     .attr("x", 10)
+        //     .attr("y", mdsheight - 10)
+        //     .attr('class', "circleGuideTitle")
+        //     .style("text-anchor", "left")
+        //     .style("fontWeight", "bold")
+        //     .text("Marginal topic distribution");
+        // d3.select("#" + leftPanelID).append("text")
+        //     .attr("x", cx2 + 10)
+        //     .attr("y", mdsheight + 2 * newSmall)
+        //     .attr('class', "circleGuideLabelSmall")
+        //     .style("text-anchor", "start")
+        //     .text(defaultLabelSmall);
+        // d3.select("#" + leftPanelID).append("text")
+        //     .attr("x", cx2 + 10)
+        //     .attr("y", mdsheight + 2 * newMedium)
+        //     .attr('class', "circleGuideLabelMedium")
+        //     .style("text-anchor", "start")
+        //     .text(defaultLabelMedium);
+        // d3.select("#" + leftPanelID).append("text")
+        //     .attr("x", cx2 + 10)
+        //     .attr("y", mdsheight + 2 * newLarge)
+        //     .attr('class', "circleGuideLabelLarge")
+        //     .style("text-anchor", "start")
+        //     .text(defaultLabelLarge);
 
         // bind mdsData to the points in the left panel:
         var points = mdsplot.selectAll("points")
@@ -444,6 +448,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                 if (vis_state.topic > 0 && old_topic != this.id) {
                     topic_off(document.getElementById(old_topic));
                 }
+            
                 topic_on(this);
             })
             .on("click", function(d) {
@@ -456,6 +461,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                 }
                 // make sure topic input box value and fragment reflects clicked selection
                 document.getElementById(topicID).value = vis_state.topic = d.topics;
+                vis_state.sentiment="mean"
                 state_save(true);
                 topic_on(this);
             })
@@ -465,7 +471,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             });
 
         svg.append("text")
-            .text("Intertopic Distance Map (via multidimensional scaling)")
+            .text("Intertopic Distance Map (Topic Similarity)")
             .attr("x", mdswidth/2 + margin.left)
             .attr("y", 30)
             .style("font-size", "16px")
@@ -500,49 +506,49 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
         var barguide = {"width": 100, "height": 15};
         d3.select("#" + barFreqsID).append("rect")
             .attr("x", 0)
-            .attr("y", mdsheight + 10)
+            .attr("y", mdsheight + 60)
             .attr("height", barguide.height)
             .attr("width", barguide.width)
             .style("fill", color1)
             .attr("opacity", 0.4);
         d3.select("#" + barFreqsID).append("text")
             .attr("x", barguide.width + 5)
-            .attr("y", mdsheight + 10 + barguide.height/2)
+            .attr("y", mdsheight + 60 + barguide.height/2)
             .style("dominant-baseline", "middle")
             .text("Overall term frequency");
 
         d3.select("#" + barFreqsID).append("rect")
             .attr("x", 0)
-            .attr("y", mdsheight + 10 + barguide.height + 5)
+            .attr("y", mdsheight + 60 + barguide.height + 5)
             .attr("height", barguide.height)
             .attr("width", barguide.width/2)
             .style("fill", color2)
             .attr("opacity", 0.8);
         d3.select("#" + barFreqsID).append("text")
             .attr("x", barguide.width/2 + 5)
-            .attr("y", mdsheight + 10 + (3/2)*barguide.height + 5)
+            .attr("y", mdsheight + 60 + (3/2)*barguide.height + 5)
             .style("dominant-baseline", "middle")
             .text("Estimated term frequency within the selected topic");
 
-        // footnotes:
-        d3.select("#" + barFreqsID)
-            .append("a")
-            .attr("xlink:href", "http://vis.stanford.edu/files/2012-Termite-AVI.pdf")
-            .attr("target", "_blank")
-            .append("text")
-            .attr("x", 0)
-            .attr("y", mdsheight + 10 + (6/2)*barguide.height + 5)
-            .style("dominant-baseline", "middle")
-            .text("1. saliency(term w) = frequency(w) * [sum_t p(t | w) * log(p(t | w)/p(t))] for topics t; see Chuang et. al (2012)");
-        d3.select("#" + barFreqsID)
-            .append("a")
-            .attr("xlink:href", "http://nlp.stanford.edu/events/illvi2014/papers/sievert-illvi2014.pdf")
-            .attr("target", "_blank")
-            .append("text")
-            .attr("x", 0)
-            .attr("y", mdsheight + 10 + (8/2)*barguide.height + 5)
-            .style("dominant-baseline", "middle")
-            .text("2. relevance(term w | topic t) = \u03BB * p(w | t) + (1 - \u03BB) * p(w | t)/p(w); see Sievert & Shirley (2014)");
+        // // footnotes:
+        // d3.select("#" + barFreqsID)
+        //     .append("a")
+        //     .attr("xlink:href", "http://vis.stanford.edu/files/2012-Termite-AVI.pdf")
+        //     .attr("target", "_blank")
+        //     .append("text")
+        //     .attr("x", 0)
+        //     .attr("y", mdsheight + 10 + (6/2)*barguide.height + 5)
+        //     .style("dominant-baseline", "middle")
+        //     .text("1. saliency(term w) = frequency(w) * [sum_t p(t | w) * log(p(t | w)/p(t))] for topics t; see Chuang et. al (2012)");
+        // d3.select("#" + barFreqsID)
+        //     .append("a")
+        //     .attr("xlink:href", "http://nlp.stanford.edu/events/illvi2014/papers/sievert-illvi2014.pdf")
+        //     .attr("target", "_blank")
+        //     .append("text")
+        //     .attr("x", 0)
+        //     .attr("y", mdsheight + 10 + (8/2)*barguide.height + 5)
+        //     .style("dominant-baseline", "middle")
+        //     .text("2. relevance(term w | topic t) = \u03BB * p(w | t) + (1 - \u03BB) * p(w | t)/p(w); see Sievert & Shirley (2014)");
 
         // Bind 'default' data to 'default' bar chart
         var basebars = chart.selectAll(to_select + " .bar-totals")
@@ -594,12 +600,12 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             .attr("class", "bubble-tool") //  set class so we can remove it when highlight_off is called
             .style("text-anchor", "middle")
             .style("font-size", "16px")
-            .text("Top-" + R + " Most Salient Terms");
+            .text("Top-" + R + " Most Important Terms");
 
-        title.append("tspan")
-            .attr("baseline-shift", "super")
-            .attr("font-size", "12px")
-            .text("(1)");
+        // title.append("tspan")
+        //     .attr("baseline-shift", "super")
+        //     .attr("font-size", "12px")
+        //     .text("(1)");
 
         // barchart axis adapted from http://bl.ocks.org/mbostock/1166403
         var xAxis = d3.axisTop(x)
@@ -624,7 +630,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             topicLabel.setAttribute("for", topicID);
             topicLabel.setAttribute("style", "font-family: sans-serif; font-size: 14px");
             //topicLabel.innerHTML = "Selected Topic: <span id='" + topicID + "-value'></span>";
-            topicLabel.innerHTML = "Selected Topic test7: <span id='" + topicID + "-value'></span>";
+            topicLabel.innerHTML = "Selected Topic: <span id='" + topicID + "-value'></span>";
             topicDiv.appendChild(topicLabel);
 
             var topicInput = document.createElement("input");
@@ -655,12 +661,12 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             clear.innerHTML = "Clear Topic";
             topicDiv.appendChild(clear);
 
-            // lambda inputs
-            var lambdaDivWidth = barwidth;
-            var lambdaDiv = document.createElement("div");
-            lambdaDiv.setAttribute("id", lambdaInputID);
-            lambdaDiv.setAttribute("style", "padding: 5px; background-color: #e8e8e8; display: inline-block; height: 50px; width: " + lambdaDivWidth + "px; float: right; margin-right: 30px");
-            inputDiv.appendChild(lambdaDiv);
+            // // lambda inputs
+            // var lambdaDivWidth = barwidth;
+            // var lambdaDiv = document.createElement("div");
+            // lambdaDiv.setAttribute("id", lambdaInputID);
+            // lambdaDiv.setAttribute("style", "padding: 5px; background-color: #e8e8e8; display: inline-block; height: 50px; width: " + lambdaDivWidth + "px; float: right; margin-right: 30px");
+            // inputDiv.appendChild(lambdaDiv);
 
             // var lambdaZero = document.createElement("div");
             // lambdaZero.setAttribute("style", "padding: 5px; height: 20px; width: 220px; font-family: sans-serif; float: left");
@@ -1016,9 +1022,9 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             //GenHealth Editied/Additional Code////////////////////////////
             
             var stackbar = [
-                {name: "Positive", color: pos_colour, value: d.sentiment_pos[0], startValue: 0, endValue: d.sentiment_pos[0]},
-                {name: "Neutral", color: neu_colour, value: d.sentiment_neu[0], startValue: d.sentiment_pos[0], endValue: d.sentiment_pos[0]+d.sentiment_neu[0]},
-                {name: "Negative", color: neg_colour, value: d.sentiment_neg[0], startValue: d.sentiment_pos[0]+d.sentiment_neu[0], endValue: 1}
+                {name: "Positive",doc:d.sentiment_pos[1] , color: pos_colour, value: d.sentiment_pos[0], startValue: 0, endValue: d.sentiment_pos[0]},
+                {name: "Neutral", doc:d.sentiment_neu[1] ,color: neu_colour, value: d.sentiment_neu[0], startValue: d.sentiment_pos[0], endValue: d.sentiment_pos[0]+d.sentiment_neu[0]},
+                {name: "Negative", doc:d.sentiment_neg[1] ,color: neg_colour, value: d.sentiment_neg[0], startValue: d.sentiment_pos[0]+d.sentiment_neu[0], endValue: 1}
             ]
             
             var stackedBarScale = d3.scaleLinear([0, 1], [0, barwidth])
@@ -1036,6 +1042,28 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                         .attr("height", 20)
                         .attr("opacity", 1)
                         .attr('fill', d=>d.color)
+                        .attr('id',d=>d.name)
+                        .on("mouseover",  function(d) {
+                            console.log("on", vis_state)
+                            bar_on(this)
+                        })
+                        .on("click", function(d) {
+                            // prevent click event defined on the div container from firing
+                            // http://bl.ocks.org/jasondavies/3186840
+                            console.log("click b4 Save",vis_state)
+                            d3.event.stopPropagation()
+                            bar_off(document.getElementById(vis_state.sentiment));
+                            vis_state.sentiment = d.name;
+                            state_save(true);
+                            bar_on(this)
+                            console.log("click after Save",vis_state);
+                        })
+                        .on("mouseout", function(d) {
+                            console.log("mouse out",vis_state)
+                            console.log(circle.__data__.sentiment_mean[1])
+                            bar_off(this);
+                            bar_on(document.getElementById(vis_state.sentiment),circle.__data__.sentiment_mean[1]);
+                        })
                     .append("text")
                         .attr("x", d => stackedBarScale(d.startValue))
                         .attr("y", -40)
@@ -1062,17 +1090,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                             .text(d =>formatPercent(d.value))); 
                             
             // Create a group for the most presentative docs
-            var docSection= d3.select("#docSection")
-                //.append("div")
-                .selectAll("div")
-                .data( d.sentiment_mean[1] )
-                .enter()
-            docSection.append("div")
-                .attr("class", "RepDocs")
-                .attr("fill", "black")
-                .style("word-break", "break-word")
-                .style("margin-bottom","10px")
-                .text(function(d) { return d })
+            bar_on(null,d.sentiment_mean[1] )
      
             // d3.select("#docSection")
             //     .append("rect")
@@ -1363,7 +1381,58 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                 .attr("y1", mdsheight + 2 * newSmall)
                 .attr("y2", mdsheight + 2 * newSmall);
         }
+        function bar_on(rect,mean=null){
+            document.querySelectorAll(".RepDocs").forEach(el => el.remove())
+            var data=null
+            var title=null
+            if (rect == null){
+                data=mean
+                title= "Most Representative Posts/Comments"
 
+            }else{
+                rect.style.strokeWidth = 3;
+                var d=rect.__data__
+                data=d.doc
+                title= "Most Representative "+d.name+" Posts/Comments"
+            }
+
+            d3.select("#docSectionTitle")
+                .append("div")
+                .attr("class", "RepDocs")
+                .attr("fill", "black")
+                .style("word-break", "break-word")
+                .style("margin-bottom","15px")
+                .style("font-weight","bold")
+                .style("font-size","15px")
+                .text(title)
+            var docSection= d3.select("#docSection")
+                .selectAll("div")
+                .data( data )
+                .enter()
+            docSection.append("div")
+                .attr("class", "RepDocs")
+                .attr("fill", "black")
+                .style("word-break", "break-word")
+                .style("margin-bottom","10px")
+                .text(function(d) { return d })
+
+        }
+        function bar_off(rect){
+            if (rect == null) return null;
+            rect.style.strokeWidth = 1;
+            document.querySelectorAll(".RepDocs").forEach(el => el.remove())
+
+            // var docSection= d3.select("#docSection")
+            //     .selectAll("div")
+            //     .data( d.doc )
+            //     .enter()
+            // docSection.append("div")
+            //     .attr("class", "RepDocs")
+            //     .attr("fill", "black")
+            //     .style("word-break", "break-word")
+            //     .style("margin-bottom","10px")
+            //     .text(function(d) { return d })
+        }
 
         // serialize the visualization state using fragment identifiers -- http://en.wikipedia.org/wiki/Fragment_identifier
         // location.hash holds the address information
@@ -1414,7 +1483,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
 
         function state_url() {
             return location.origin + location.pathname + "#topic=" + vis_state.topic +
-                "&lambda=" + vis_state.lambda + "&term=" + vis_state.term;
+                "&lambda=" + vis_state.lambda + "&term=" + vis_state.term+ "&sentiment=" + vis_state.sentiment;
         }
 
         function state_save(replace) {
@@ -1422,6 +1491,8 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                 history.replaceState(vis_state, "Query", state_url());
             else
                 history.pushState(vis_state, "Query", state_url());
+
+                console.log(vis_state)
         }
 
         function state_reset() {
