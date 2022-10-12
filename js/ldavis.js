@@ -303,7 +303,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
         docSectionTitle.id="docSectionTitle"
         var docSectionDiv= document.createElement("div")
         docSectionDiv.id="docSection"
-        docSectionDiv.style.width="50%"
+        docSectionDiv.style.width="75%"
         document.getElementById(visID).append(docSectionTitle)
         document.getElementById(visID).append(docSectionDiv)
 
@@ -1092,14 +1092,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             // Create a group for the most presentative docs
             bar_on(null,d.sentiment_mean[1] )
      
-            // d3.select("#docSection")
-            //     .append("rect")
-            //     .attr("width", "300px")
-            //     .attr("height", "200px")
-            //     .style("fill", "steelblue");
-            //////////////////////////////////////////////////
-            
-            
+
             // append text with info relevant to topic of interest
             d3.select("#" + barFreqsID)
                 .append("text")
