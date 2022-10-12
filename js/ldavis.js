@@ -307,98 +307,6 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
         document.getElementById(visID).append(docSectionTitle)
         document.getElementById(visID).append(docSectionDiv)
 
-           
-        
-        ////Interlop distance axis
-        // mdsplot.append("line") // draw x-axis
-        //     .attr("x1", 0)
-        //     .attr("x2", mdswidth)
-        //     .attr("y1", mdsheight / 2)
-        //     .attr("y2", mdsheight / 2)
-        //     .attr("stroke", "gray")
-        //     .attr("opacity", 0.3);
-        // mdsplot.append("text") // label x-axis
-        //     .attr("x", 0)
-        //     .attr("y", mdsheight/2 - 5)
-        //     .text(data['plot.opts'].xlab)
-        //     .attr("fill", "gray");
-
-        // mdsplot.append("line") // draw y-axis
-        //     .attr("x1", mdswidth / 2)
-        //     .attr("x2", mdswidth / 2)
-        //     .attr("y1", 0)
-        //     .attr("y2", mdsheight)
-        //     .attr("stroke", "gray")
-        //     .attr("opacity", 0.3);
-        // mdsplot.append("text") // label y-axis
-        //     .attr("x", mdswidth/2 + 5)
-        //     .attr("y", 7)
-        //     .text(data['plot.opts'].ylab)
-        //     .attr("fill", "gray");
-        ////////////////////////////////////
-
-        // // new definitions based on fixing the sum of the areas of the default topic circles:
-        // var newSmall = Math.sqrt(0.02*mdsarea*circle_prop/Math.PI);
-        // var newMedium = Math.sqrt(0.05*mdsarea*circle_prop/Math.PI);
-        // var newLarge = Math.sqrt(0.10*mdsarea*circle_prop/Math.PI);
-        // var cx = 10 + newLarge,
-        //     cx2 = cx + 1.5 * newLarge;
-
-        // // circle guide inspired from
-        // // http://www.nytimes.com/interactive/2012/02/13/us/politics/2013-budget-proposal-graphic.html?_r=0
-        // var circleGuide = function(rSize, size) {
-        //     d3.select("#" + leftPanelID).append("circle")
-        //         .attr('class', "circleGuide" + size)
-        //         .attr('r', rSize)
-        //         .attr('cx', cx)
-        //         .attr('cy', mdsheight + rSize)
-        //         .style('fill', 'none')
-        //         .style('stroke-dasharray', '2 2')
-        //         .style('stroke', '#999');
-        //     d3.select("#" + leftPanelID).append("line")
-        //         .attr('class', "lineGuide" + size)
-        //         .attr("x1", cx)
-        //         .attr("x2", cx2)
-        //         .attr("y1", mdsheight + 2 * rSize)
-        //         .attr("y2", mdsheight + 2 * rSize)
-        //         .style("stroke", "gray")
-        //         .style("opacity", 0.3);
-        // };
-
-        // circleGuide(newSmall, "Small");
-        // circleGuide(newMedium, "Medium");
-        // circleGuide(newLarge, "Large");
-
-        // var defaultLabelSmall = "2%";
-        // var defaultLabelMedium = "5%";
-        // var defaultLabelLarge = "10%";
-
-        // d3.select("#" + leftPanelID).append("text")
-        //     .attr("x", 10)
-        //     .attr("y", mdsheight - 10)
-        //     .attr('class', "circleGuideTitle")
-        //     .style("text-anchor", "left")
-        //     .style("fontWeight", "bold")
-        //     .text("Marginal topic distribution");
-        // d3.select("#" + leftPanelID).append("text")
-        //     .attr("x", cx2 + 10)
-        //     .attr("y", mdsheight + 2 * newSmall)
-        //     .attr('class', "circleGuideLabelSmall")
-        //     .style("text-anchor", "start")
-        //     .text(defaultLabelSmall);
-        // d3.select("#" + leftPanelID).append("text")
-        //     .attr("x", cx2 + 10)
-        //     .attr("y", mdsheight + 2 * newMedium)
-        //     .attr('class', "circleGuideLabelMedium")
-        //     .style("text-anchor", "start")
-        //     .text(defaultLabelMedium);
-        // d3.select("#" + leftPanelID).append("text")
-        //     .attr("x", cx2 + 10)
-        //     .attr("y", mdsheight + 2 * newLarge)
-        //     .attr('class', "circleGuideLabelLarge")
-        //     .style("text-anchor", "start")
-        //     .text(defaultLabelLarge);
-
         // bind mdsData to the points in the left panel:
         var points = mdsplot.selectAll("points")
             .data(mdsData)
@@ -530,26 +438,6 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             .style("dominant-baseline", "middle")
             .text("Estimated term frequency within the selected topic");
 
-        // // footnotes:
-        // d3.select("#" + barFreqsID)
-        //     .append("a")
-        //     .attr("xlink:href", "http://vis.stanford.edu/files/2012-Termite-AVI.pdf")
-        //     .attr("target", "_blank")
-        //     .append("text")
-        //     .attr("x", 0)
-        //     .attr("y", mdsheight + 10 + (6/2)*barguide.height + 5)
-        //     .style("dominant-baseline", "middle")
-        //     .text("1. saliency(term w) = frequency(w) * [sum_t p(t | w) * log(p(t | w)/p(t))] for topics t; see Chuang et. al (2012)");
-        // d3.select("#" + barFreqsID)
-        //     .append("a")
-        //     .attr("xlink:href", "http://nlp.stanford.edu/events/illvi2014/papers/sievert-illvi2014.pdf")
-        //     .attr("target", "_blank")
-        //     .append("text")
-        //     .attr("x", 0)
-        //     .attr("y", mdsheight + 10 + (8/2)*barguide.height + 5)
-        //     .style("dominant-baseline", "middle")
-        //     .text("2. relevance(term w | topic t) = \u03BB * p(w | t) + (1 - \u03BB) * p(w | t)/p(w); see Sievert & Shirley (2014)");
-
         // Bind 'default' data to 'default' bar chart
         var basebars = chart.selectAll(to_select + " .bar-totals")
             .data(barDefault2)
@@ -623,7 +511,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
 
             // topic input container:
             var topicDiv = document.createElement("div");
-            topicDiv.setAttribute("style", "padding: 5px; background-color: #e8e8e8; display: inline-block; width: " + mdswidth + "px; height: 30px; float: left");
+            topicDiv.setAttribute("style", "padding: 5px; background-color: #e8e8e8; display: inline-block; width: " + mdswidth + "px; height: 40px; float: left");
             inputDiv.appendChild(topicDiv);
 
             var topicLabel = document.createElement("label");
@@ -660,54 +548,6 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             clear.setAttribute("style", "margin-left: 5px");
             clear.innerHTML = "Clear Topic";
             topicDiv.appendChild(clear);
-
-            // // lambda inputs
-            // var lambdaDivWidth = barwidth;
-            // var lambdaDiv = document.createElement("div");
-            // lambdaDiv.setAttribute("id", lambdaInputID);
-            // lambdaDiv.setAttribute("style", "padding: 5px; background-color: #e8e8e8; display: inline-block; height: 50px; width: " + lambdaDivWidth + "px; float: right; margin-right: 30px");
-            // inputDiv.appendChild(lambdaDiv);
-
-            // var lambdaZero = document.createElement("div");
-            // lambdaZero.setAttribute("style", "padding: 5px; height: 20px; width: 220px; font-family: sans-serif; float: left");
-            // lambdaZero.setAttribute("id", lambdaZeroID);
-            // lambdaDiv.appendChild(lambdaZero);
-            // var xx = d3.select("#" + lambdaZeroID)
-            //     .append("text")
-            //     .attr("x", 0)
-            //     .attr("y", 0)
-            //     .style("font-size", "14px")
-            //     .text("Slide to adjust relevance metric:");
-            // var yy = d3.select("#" + lambdaZeroID)
-            //     .append("text")
-            //     .attr("x", 125)
-            //     .attr("y", -5)
-            //     .style("font-size", "10px")
-            //     .style("position", "absolute")
-            //     .text("(2)");
-
-            // var sliderDiv = document.createElement("div");
-            // sliderDiv.setAttribute("id", sliderDivID);
-            // sliderDiv.setAttribute("style", "padding: 5px; height: 40px; width: 250px; float: right; margin-top: -5px; margin-right: 10px");
-            // lambdaDiv.appendChild(sliderDiv);
-
-            // var lambdaInput = document.createElement("input");
-            // lambdaInput.setAttribute("style", "width: 250px; margin-left: 0px; margin-right: 0px");
-            // lambdaInput.type = "range";
-            // lambdaInput.min = 0;
-            // lambdaInput.max = 1;
-            // lambdaInput.step = data['lambda.step'];
-            // lambdaInput.value = vis_state.lambda;
-            // lambdaInput.id = lambdaID;
-            // lambdaInput.setAttribute("list", "ticks"); // to enable automatic ticks (with no labels, see below)
-            // sliderDiv.appendChild(lambdaInput);
-
-            // var lambdaLabel = document.createElement("label");
-            // lambdaLabel.setAttribute("id", lambdaLabelID);
-            // lambdaLabel.setAttribute("for", lambdaID);
-            // lambdaLabel.setAttribute("style", "height: 20px; width: 60px; font-family: sans-serif; font-size: 14px; margin-left: 80px");
-            // lambdaLabel.innerHTML = "&#955 = <span id='" + lambdaID + "-value'>" + vis_state.lambda + "</span>";
-            // lambdaDiv.appendChild(lambdaLabel);
 
             // Create the svg to contain the slider scale:
             var scaleContainer = d3.select("#" + sliderDivID).append("svg")
@@ -1044,23 +884,18 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                         .attr('fill', d=>d.color)
                         .attr('id',d=>d.name)
                         .on("mouseover",  function(d) {
-                            console.log("on", vis_state)
                             bar_on(this)
                         })
                         .on("click", function(d) {
                             // prevent click event defined on the div container from firing
                             // http://bl.ocks.org/jasondavies/3186840
-                            console.log("click b4 Save",vis_state)
                             d3.event.stopPropagation()
                             bar_off(document.getElementById(vis_state.sentiment));
                             vis_state.sentiment = d.name;
                             state_save(true);
                             bar_on(this)
-                            console.log("click after Save",vis_state);
                         })
                         .on("mouseout", function(d) {
-                            console.log("mouse out",vis_state)
-                            console.log(circle.__data__.sentiment_mean[1])
                             bar_off(this);
                             bar_on(document.getElementById(vis_state.sentiment),circle.__data__.sentiment_mean[1]);
                         })
@@ -1484,8 +1319,6 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                 history.replaceState(vis_state, "Query", state_url());
             else
                 history.pushState(vis_state, "Query", state_url());
-
-                console.log(vis_state)
         }
 
         function state_reset() {
