@@ -623,7 +623,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
 
             // topic input container:
             var topicDiv = document.createElement("div");
-            topicDiv.setAttribute("style", "padding: 5px; background-color: #e8e8e8; display: inline-block; width: " + mdswidth + "px; height: 50px; float: left");
+            topicDiv.setAttribute("style", "padding: 5px; background-color: #e8e8e8; display: inline-block; width: " + mdswidth + "px; height: 30px; float: left");
             inputDiv.appendChild(topicDiv);
 
             var topicLabel = document.createElement("label");
