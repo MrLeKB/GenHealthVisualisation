@@ -1407,7 +1407,7 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                 .attr("fill", "black")
                 .style("word-break", "break-word")
                 .style("margin-bottom","10px")
-                .text(function(d) { return d })
+                .text(function(d,i) { return (i+1)+". "+ d })
 
         }
         function bar_off(rect){
