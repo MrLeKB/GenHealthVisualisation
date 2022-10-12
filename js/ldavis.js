@@ -1210,11 +1210,11 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             //circle.style.fill = color1;
 
             var title = d3.selectAll(to_select + " .bubble-tool")
-                .text("Top-" + R + " Most Salient Terms");
-            title.append("tspan")
-                .attr("baseline-shift", "super")
-                .attr("font-size", 12)
-                .text(1);
+                .text("Top-" + R + " Most Important Terms");
+            // title.append("tspan")
+            //     .attr("baseline-shift", "super")
+            //     .attr("font-size", 12)
+            //     .text(1);
 
             // remove the red bars
             d3.selectAll(to_select + " .overlay").remove();
