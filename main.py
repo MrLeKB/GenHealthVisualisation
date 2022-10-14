@@ -11,5 +11,3 @@ def test():
      return render_template("twitter_aug.html")
 
 
-if __name__ == "__main__":
-    app.run()
