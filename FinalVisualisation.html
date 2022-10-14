@@ -1,0 +1,54 @@
+<html>
+  <style>
+    #header{
+      font-family: 'halantregular';
+      background-color:#1f4f50 ;
+      padding: 2px;
+      padding-left: 5px;
+      color: #fff;
+      font-weight: bolder;
+      margin: 0px;
+    }
+    #title{
+      font-size: 32px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+  </style> 
+  <head> 
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js" type="text/javascript"></script>
+    
+  </head> 
+
+  <body> 
+    <div id="header" >
+        <P id="title">GEN Health Topics of Interest</P>
+        <form onsubmit="return false;">
+          <input type="month" id="monthInput" name="monthInput">
+          <input type="submit" onclick="reqVis()">
+        </form>      
+    </div>
+     <div id="includedContent" style="width: 50%"></div>
+
+
+     <script> 
+      date = new Date();
+      year = date.getFullYear();
+      month = String(date.getMonth()).padStart(2, '0');
+  
+      previousMonth= year+"-"+month
+      document.getElementById("monthInput").value= previousMonth
+  
+      reqVis(previousMonth)
+  
+      function reqVis(input){
+        $(function(){
+        $("#includedContent").load("twitter_aug.html"); 
+        });  
+        }
+  
+      
+      </script> 
+  </body> 
+</html>
