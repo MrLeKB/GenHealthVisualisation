@@ -15,9 +15,9 @@ if __name__ == "__main__":
     test_thread= threading.Thread(target=test)
 
     threads.append(vis_thread)
-    print('Starting Thread {}'.format(i))
+    print('Starting Thread 1')
     vis_thread.start()
 
     threads.append(test_thread)
-    print('Starting Thread {}'.format(i))
+    print('Starting Thread 2')
     test_thread.start()
