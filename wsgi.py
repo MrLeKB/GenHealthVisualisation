@@ -6,6 +6,7 @@ def visualisation():
     app.run()
 
 def test():
+    print ("test______________________________________test____________")
     app2.run()
 
 if __name__ == "__main__":
