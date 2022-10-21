@@ -1,9 +1,12 @@
 import threading
 from app.vis import app
-
+from app.vis_copy import app2
 
 def visualisation():
     app.run()
+
+def test():
+    app2.run()
 
 if __name__ == "__main__":
     threads = list()
@@ -11,3 +14,9 @@ if __name__ == "__main__":
     threads.append(t)
     print('Starting Thread {}'.format(i))
     vis_thread.start()
+
+    vis_thread2= threading.Thread(target=test)
+
+    threads.append(t)
+    print('Starting Thread {}'.format(i))
+    vis_thread2.start()

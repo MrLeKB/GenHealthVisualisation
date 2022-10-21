@@ -1,11 +1,9 @@
 from flask import Flask, render_template
 
-app = Flask(__name__)
+app2 = Flask(__name__)
 
 @app.route("/")
 def index():
-
-     print("second threatd______________________________________________")
      return render_template("FinalVisualisation.html")
 
 @app.route("/twitter_aug")
