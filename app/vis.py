@@ -15,6 +15,5 @@ def test2():
      print("test")
      return None
 
-if __name__ == "__main__":
-     print('test')
+     
 
