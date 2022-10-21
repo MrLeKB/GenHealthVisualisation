@@ -10,4 +10,8 @@ def index():
 def test():
      return render_template("twitter_aug.html")
 
+@app.route("/test")
+def test():
+     return print("test")
+
 
