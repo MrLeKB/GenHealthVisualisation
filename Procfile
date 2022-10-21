@@ -1,1 +1,1 @@
-web: gunicorn test.wsgi
+web: vis.py runserver 0.0.0.0:5000
