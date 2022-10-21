@@ -5,7 +5,7 @@ app = Flask(__name__)
 @app.route("/")
 def index():
 
-     print("second threatd______________________________________________")
+     print("first thread______________________________________________")
      return render_template("FinalVisualisation.html")
 
 @app.route("/twitter_aug")
