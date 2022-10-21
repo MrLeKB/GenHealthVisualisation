@@ -1,19 +1,19 @@
-import threading
-from app.vis import app
-#from app.vis_copy import app2
+# import threading
+# from app.vis import app
+# #from app.vis_copy import app2
 
-def visualisation():
-    print("first thread______________________________________________")
-    app.run()
+# def visualisation():
+#     print("first thread______________________________________________")
+#     app.run()
 
-def test():
-    print ("test______________________________________test____________")
-    #app2.run()
+# def test():
+#     print ("test______________________________________test____________")
+#     #app2.run()
 
-if __name__ == "__main__":
-    test()
-    visualisation()
-    test()
+# if __name__ == "__main__":
+#     test()
+#     visualisation()
+#     test()
     # threads = list()
     # vis_thread= threading.Thread(target=visualisation)
     # test_thread= threading.Thread(target=test)
