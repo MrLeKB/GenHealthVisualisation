@@ -3,6 +3,7 @@ from app.vis import app
 #from app.vis_copy import app2
 
 def visualisation():
+    print("first thread______________________________________________")
     app.run()
 
 def test():
