@@ -1,1 +1,1 @@
-web: vis.py runserver 0.0.0.0:5000
+web: app/vis.py runserver 0.0.0.0:5000
