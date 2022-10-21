@@ -12,6 +12,7 @@ def test():
 
 @app.route("/test")
 def test():
-     return print("test")
+     print("test")
+     return None
 
 
