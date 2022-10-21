@@ -11,7 +11,7 @@ def test():
      return render_template("twitter_aug.html")
 
 @app.route("/test")
-def test():
+def test2():
      print("test")
      return None
 
