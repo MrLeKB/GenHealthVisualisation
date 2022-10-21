@@ -1,10 +1,10 @@
 import threading
-from app.vis import vis
+from app.vis import app
 
 
 def visualisation():
-    vis.run()
-    
+    app.run()
+
 if __name__ == "__main__":
     threads = list()
     vis_thread= threading.Thread(target=visualisation)
