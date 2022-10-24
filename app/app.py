@@ -9,14 +9,13 @@ from datetime import datetime
 import json
 
 import nltk
-#nltk.download("all")
+nltk.download("all")
 #Sentiment Analysis
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from nltk import FreqDist
 from nltk import word_tokenize, pos_tag
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
-nltk.download('stopwords')
 stop_words = stopwords.words('english')
 from nltk.corpus import wordnet
 import re
