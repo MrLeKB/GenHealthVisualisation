@@ -7,11 +7,19 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
+     t = threading.Thread(target=func)
+     t.start()
      return render_template("FinalVisualisation.html")
+
+def func():
+     print("thread created____________________")
+     
 
 @app.route("/twitter_aug")
 def test():
      return render_template("twitter_aug.html")
+
+
 
 @app.route("/request_html")
 def request_html(year_month):
@@ -30,4 +38,5 @@ def initialise_analysis():
 
      
 if __name__ == '__main__':
+
     app.run(host='0.0.0.0', port=5000, debug=True)
