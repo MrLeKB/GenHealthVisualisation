@@ -4,15 +4,23 @@ import threading
 
 app = Flask(__name__)
 
-t = threading.Thread(target=func)
-t.start()
+
 
 @app.route("/")
 def index():
+     t = threading.Thread(target=func)
+     t.start()
      return render_template("FinalVisualisation.html")
 
 def func():
-     print("__________Task 1 assigned to thread: {}".format(threading.current_thread().name))     
+     print("__________Task 1 assigned to thread: {}".format(threading.current_thread().name)) 
+     x=0
+     while True:
+          if x>100000:
+              break
+          if x% 1000 == 0:
+               print("Log--------------%s" % ( x))   
+          x+1
 
 
 @app.route("/twitter_aug")
