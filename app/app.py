@@ -11,8 +11,8 @@ def index():
      t2 = threading.Thread(target=func)
      t.start()
      t2.start()
-     t.join()
-     t2.join()
+     # t.join()
+     # t2.join()
 
 
 
