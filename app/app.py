@@ -81,9 +81,18 @@ def request_html(date):
     print("requested_html")
     return html_str
 
-@app.route("/initialise_scraper/<date>")
 def initialise_scraper(date):
-    print("test")
+    print("Log---Initiated scraper {}".format(date))
+    currentYearMonth="2022-09-01"
+    #currentYearMonth=datetime.today().replace(day=1).strftime('%Y-%m-%d')
+    print("Scheduler:Scraper Request Input {}".format(currentYearMonth))
+    #initialise_analysis(currentYearMonth)
+    scraperThread = threading.Thread(target=scraper,args=(currentYearMonth,))
+    try:
+        scraperThread.start()
+        print("Log---Scraper completed{}".format(date))
+    except:
+        print("Log---Scraper failed{}".format(date))
     return None
 
 def initialise_analysis(date):
@@ -99,6 +108,11 @@ def initialise_analysis(date):
     except:
         print("Log---Analysis failed{}".format(date))
     return None
+
+def scraper(date):
+    
+    return None
+
 def analysis(date):    # Read data from PostgreSQL database table and load into a DataFrame instance
     dbConnection = engine.connect()
     dataFrame = pd.read_sql("select * from \"json_table\" where DATE(timestamp) = '{}'".format(date), dbConnection)
@@ -379,7 +393,7 @@ def analysis(date):    # Read data from PostgreSQL database table and load into 
     vis_html = pyLDAvis.prepared_data_to_html(vis)
     print("Log---prepared html-------")
     #Send HTML to database
-    currDate = "test1"
+    currDate = date
 
     try:
         # Connect to an existing database
