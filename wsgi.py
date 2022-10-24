@@ -5,12 +5,13 @@ def visualisation():
     print("first thread______________________________________________")
     app.run()
 
-# def test():
-#     print ("test______________________________________test____________")
-#     #app2.run()
+def test():
+      return "<h1>Welcome to CodingX</h1>"
+
 
 if __name__ == "__main__":
-    visualisation()
+    test
+    #visualisation()
     # test()
     # visualisation()
     # test()
