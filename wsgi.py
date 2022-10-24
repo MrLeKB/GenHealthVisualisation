@@ -3,7 +3,7 @@ from app.vis import app
 
 def visualisation():
     print("first thread______________________________________________")
-    app.run()
+    #app.run()
 
 def test():
       return "<h1>Welcome to CodingX</h1>"
