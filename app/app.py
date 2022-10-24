@@ -6,10 +6,6 @@ import psycopg2
 from psycopg2 import Error
 import pandas as pd
 from datetime import datetime
-
-
-#imports
-import pandas as pd
 import json
 
 import nltk
@@ -20,6 +16,7 @@ from nltk import FreqDist
 from nltk import word_tokenize, pos_tag
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
+nltk.download('stopwords')
 stop_words = stopwords.words('english')
 from nltk.corpus import wordnet
 import re
@@ -31,11 +28,8 @@ from gensim.utils import simple_preprocess
 from gensim.models import CoherenceModel
 # spacy for lemmatization
 import spacy
-# Plotting tools
 import pyLDAvis
 import pyLDAvis.gensim_models as gensimvis # don't skip this
-import sqlalchemy
-from sqlalchemy import create_engine
 
 # from signal import signal, SIGPIPE, SIG_DFL  
 # signal(SIGPIPE,SIG_DFL) 
