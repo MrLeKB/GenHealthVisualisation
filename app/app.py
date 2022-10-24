@@ -81,7 +81,7 @@ def request_html(date):
     print("requested_html")
     return html_str
 
-def initialise_scraper(date):
+def initialise_scraper(date=None):
     print("Log---Initiated scraper {}".format(date))
     currentYearMonth="2022-09-01"
     #currentYearMonth=datetime.today().replace(day=1).strftime('%Y-%m-%d')
@@ -95,18 +95,19 @@ def initialise_scraper(date):
         print("Log---Scraper failed{}".format(date))
     return None
 
-def initialise_analysis(date):
-    print("Log---Initiated analysis {}".format(date))
+def initialise_analysis():
+    
     currentYearMonth="2022-09-01"
     #currentYearMonth=datetime.today().replace(day=1).strftime('%Y-%m-%d')
+    print("Log---Initiated analysis")
     print("Scheduler:Analysis Request Input {}".format(currentYearMonth))
     #initialise_analysis(currentYearMonth)
     analysisThread = threading.Thread(target=analysis,args=(currentYearMonth,))
     try:
         analysisThread.start()
-        print("Log---Analysis completed{}".format(date))
+        print("Log---Analysis completed{}".format(currentYearMonth))
     except:
-        print("Log---Analysis failed{}".format(date))
+        print("Log---Analysis failed{}".format(currentYearMonth))
     return None
 
 def scraper(date):
