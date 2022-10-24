@@ -1,5 +1,9 @@
 flask==2.0.3
 gunicorn== 20.0.4
-sqlalchemy
-psycopg2
-pandas
+sqlalchemy==1.4.42
+psycopg2 == 2.9.4
+pandas == 1.1.5
+snscrape == 0.3.4
+praw == 7.5.0
+numpy == 1.19.5
+splitter == 0.1.1
