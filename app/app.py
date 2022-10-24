@@ -7,18 +7,27 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-     t = threading.Thread(target=func)
+     t = threading.Thread(target=home)
+     t2 = threading.Thread(target=func)
      t.start()
-     return render_template("FinalVisualisation.html")
+     t2.start()
+     t.join()
+     t2.join()
+
+
 
 def func():
      print("thread created____________________")
-     
+     print("Task 1 assigned to thread: {}".format(threading.current_thread().name))     
+
+@app.route("/home")
+def home():
+     print("Vis assigned to thread: {}".format(threading.current_thread().name))  
+     return render_template("FinalVisualisation.html")
 
 @app.route("/twitter_aug")
 def test():
      return render_template("twitter_aug.html")
-
 
 
 @app.route("/request_html")
