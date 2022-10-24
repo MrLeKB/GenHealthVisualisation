@@ -12,7 +12,6 @@ import nltk
 #Sentiment Analysis
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from nltk.corpus import stopwords
-stop_words = stopwords.words('english')
 import re
 import math
 # Gensim
@@ -100,6 +99,7 @@ def scraper(date):
     return None
 
 def analysis(date):    # Read data from PostgreSQL database table and load into a DataFrame instance
+    stop_words = stopwords.words('english')
     dbConnection = engine.connect()
     dataFrame = pd.read_sql("select * from \"json_table\" where DATE(timestamp) = '{}'".format(date), dbConnection)
     dbConnection.close()
