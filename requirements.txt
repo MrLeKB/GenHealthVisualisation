@@ -4,7 +4,7 @@ sqlalchemy==1.4.42
 psycopg2 == 2.9.4
 pandas
 snscrape == 0.3.4
-praw == 7.5.0
+praw == 7.6.0
 numpy
 splitter == 0.1.1
 nltk ==3.6.7
@@ -12,3 +12,4 @@ gensim == 3.8.0
 spacy ==3.4.1
 future
 funcy
+wordninja==2.0.0

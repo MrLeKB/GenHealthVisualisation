@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 import psycopg2
 from psycopg2 import Error
 import pandas as pd
-from datetime import datetime
+import datetime 
 import json
 
 import nltk
@@ -23,9 +23,15 @@ from gensim.models import CoherenceModel
 import spacy
 import pyLDAvis
 import pyLDAvis.gensim_models as gensimvis # don't skip this
+import snscrape.modules.twitter as sntwitter
+import praw
 
-# from signal import signal, SIGPIPE, SIG_DFL  
-# signal(SIGPIPE,SIG_DFL) 
+import wordninja
+
+
+import logging
+logging.disable(logging.INFO)
+
 
 app = Flask(__name__)
 
@@ -38,22 +44,9 @@ def index():
         print(thread.name)
     return render_template("FinalVisualisation.html")
 
-# def checkScheduler():
-#      for thread in threading.enumerate(): 
-#           print(thread.name)
-
-
-#      x=0
-#      while True:
-#           if x>10000000:
-#               break
-#           if x% 100000 == 0:
-#                print("Log--------------%s" % (x))   
-#           x+=1
-
 @app.route("/request_html/<date>")
 def request_html(date):
-    print("Retrieving html file from {}".format(date))
+    print("Log---Retrieving html file from {}".format(date))
     #dbConnection = engine.connect()
     # Read data from PostgreSQL database table and load into a DataFrame instance
     # dataFrame = pd.read_sql("select * from \"html_table\"", dbConnection)
@@ -65,40 +58,216 @@ def request_html(date):
     print("requested_html")
     return html_str
 
-def initialise_scraper(date=None):
-    print("Log---Initiated scraper {}".format(date))
-    currentYearMonth="2022-09-01"
-    #currentYearMonth=datetime.today().replace(day=1).strftime('%Y-%m-%d')
-    print("Scheduler:Scraper Request Input {}".format(currentYearMonth))
+def initialise_scraper():
+    today = datetime.date.today()
+    first = today.replace(day=1)
+    last_month_last = first - datetime.timedelta(days=1)
+    last_month_first = last_month_last.replace(day=1)
+
+    start_date= last_month_first.strftime("%Y-%m-%d")
+    end_date= last_month_last.strftime("%Y-%m-%d")
+    #currentYearMonth=datetime.date.today().replace(day=1).strftime('%Y-%m-%d')
+    print("Log---Scheduler:Scraper Request Input {} to {}".format(start_date,end_date))
     #initialise_analysis(currentYearMonth)
-    scraperThread = threading.Thread(target=scraper,args=(currentYearMonth,))
+    scraperThread = threading.Thread(target=scraper,args=(start_date,end_date,))
     try:
         scraperThread.start()
-        print("Log---Scraper completed{}".format(date))
+        print("Log---Scraper completed {} to {}".format(start_date,end_date))
     except:
-        print("Log---Scraper failed{}".format(date))
+        print("Log---Scraper failed {} to {}".format(start_date,end_date))
     return None
 
 def initialise_analysis():
     
-    currentYearMonth="2022-09-01"
-    #currentYearMonth=datetime.today().replace(day=1).strftime('%Y-%m-%d')
-    print("Log---Initiated analysis")
-    print("Scheduler:Analysis Request Input {}".format(currentYearMonth))
+    currentYearMonth="scheduler testing 1"
+    #currentYearMonth=datetime.date.today().replace(day=1).strftime('%Y-%m-%d')
+    print("Log---Scheduler:Analysis Request Input {}".format(currentYearMonth))
     #initialise_analysis(currentYearMonth)
     analysisThread = threading.Thread(target=analysis,args=(currentYearMonth,))
     try:
         analysisThread.start()
-        print("Log---Analysis completed{}".format(currentYearMonth))
     except:
         print("Log---Analysis failed{}".format(currentYearMonth))
     return None
 
-def scraper(date):
+def scraper(start_date,end_date):
+    print("Log---Initiated scraper {} to {}".format(start_date,end_date))
+    #initialisation
+    keywords =  ['nutrition','health', 'wellness','longevity']
+    #Twitter Scrape
+    twitter_dict = []
+    print("Log---start of twitter scrapper!")
+    for each_keyword in keywords:      
+        print("Log---twitter scraping for {}".format(each_keyword))
+        start = datetime.datetime.now()      
+        for i,tweet in enumerate(sntwitter.TwitterSearchScraper(each_keyword,'since:%s until:%s lang:en'%(start_date, end_date)).get_items()):
+            if i>8000:
+                break
+            dtime = tweet.date
+            new_datetime = datetime.datetime.strftime(datetime.datetime.strptime(str(dtime), '%Y-%m-%d %H:%M:%S+00:00'), '%Y-%m-%d %H:%M:%S')
+            twitter_dict.append([tweet.content, new_datetime])
+        
+        print("Log---time taken:", datetime.datetime.now()-start)
+
+    print("Log---length of twitter_dict before slicing:", len(twitter_dict))
+    twitter_dict.sort(key=lambda row: (row[1]), reverse=True)
+
+    #Reddit Scrape
+    reddit_read_only = praw.Reddit( client_id = 'X51vAo_gxeYLE_4l3IGKIg',
+                                    client_secret = '8fVY5UM-zLjRAam06evgexOzY0QwIg',
+                                    user_agent = 'FYP WebScraping', check_for_async=False)
+
+    redditposts_dict = []
+    print("Log---start of reddit scrapper!")
+
+    for i in keywords: 
+        
+        print("Log---reddit scraping for {}".format(i))
+        start = datetime.datetime.now()
+
+        redditposts = reddit_read_only.subreddit(i)
+        posts = redditposts.top(time_filter="month")
+
+        for post in posts: 
+            redditposts_dict.append([])
+            redditposts_dict[-1].append(post.title + " -- " + post.selftext)
+            
+            post_parsed_date = datetime.datetime.utcfromtimestamp(post.created_utc)
+            redditposts_dict[-1].append(post_parsed_date)
+
+            if not post.stickied:
+                post.comments.replace_more(limit=0)
+                for comment in post.comments.list():
+                    if comment.author == "AutoModerator": 
+                        pass
+                    else: 
+                        redditposts_dict.append([])
+                        redditposts_dict[-1].append(post.title + "--" + comment.body)
+                        
+                        comment_parsed_date = datetime.datetime.utcfromtimestamp(comment.created_utc)
+                        redditposts_dict[-1].append(comment_parsed_date)
+        
+        print("Log---time taken:", datetime.datetime.now()-start)
+
+    print("Log---length of reddit_dict:", len(redditposts_dict))
+
+    #Combine
+    print("Log---Start preprocessing phase 1 of scraped data")
+    combined_dict = twitter_dict[:10000] + redditposts_dict
+    final_df = pd.DataFrame(combined_dict, columns=["Content", "Datetime"])
     
-    return None
+
+    #Data Pre-processing
+    df = final_df.copy()
+    df['original_text'] = df.loc[:, 'Content']
+
+    #Functions for pre-processing
+    def remove_urls (text):
+        text = re.sub(r'(https|http)?:\/\/(\w|\.|\/|\?|\=|\&|\%)*\b', '', text, flags=re.MULTILINE)
+        return(text)
+
+    def clean_text_sentiment(text):
+
+        text = re.sub(r"(&amp;)",' ',text)
+        text = re.sub(r"@[\w]+",' ',text)
+        text = re.sub(r"\n",' ',text)
+        text = re.sub(r"#",' ',text)
+        text = re.sub(r"[^a-zA-Z0-9]+",' ',text)
+
+        return text
+
+    def small_words_removal(paragraph):
+        result = []
+        tokens = paragraph.split(" ")
+        for word in tokens:
+            if len(word) >= 3:
+                result.append(word)
+
+        return " ".join(result)
+
+    def bigwords_advanced_cleaning(paragraph):
+
+        result = []
+        
+        tokens = paragraph.split(" ")
+        for outer_idx, word in enumerate(tokens):
+            if len(word) > 12:
+                # ['r', 'take'...]
+                split_words = wordninja.split(word.lower())
+
+                # The result for a nonsencial string is '' for e.g. 'aaaaaa'
+                if split_words == '':
+                    continue
+
+                # cases like Gastroenterology (Corner cases)
+                if type(split_words) != list:
+                    result.append(split_words)
+                    continue 
+
+                for idx, split_word in enumerate(split_words):
+                    
+                    # remove super small split_word
+                    if (len(split_word) < 3 or split_word == ''):
+                        split_words.pop(idx)  
+
+                for split_word in split_words:
+                    result.append(split_word)
+
+            else:
+                result.append(word)
+
+        return " ".join(result)
+
+    #Remove URLs
+    df['Content'] = df['Content'].apply(lambda x:remove_urls(x))
+    #remove /n, &amp, @usernames, non english characters
+    df['Content'] = df['Content'].apply(lambda x:clean_text_sentiment(x))
+    #remove small words
+    df['Content'] = df['Content'].apply(small_words_removal)
+    #remove big words
+    df['Content'] = df['Content'].apply(bigwords_advanced_cleaning)
+    #Final JSON Output
+    data = df.to_json(orient="index")
+    #Ingestion to Database
+    currDate = "scheduler testing 1"
+
+    try:
+        # Connect to an existing database
+        connection = psycopg2.connect(user="pvahbfuxwqhvpq",
+                                    password="3837ad2efc075df162ec73cc54d80e55b1aff7a1098b0eb5916502107f4b97bb",
+                                    host="ec2-34-194-40-194.compute-1.amazonaws.com",
+                                    port="5432",
+                                    database="dcrh9u79n7rtsa")
+
+        # Create a cursor to perform database operations
+        cursor = connection.cursor()
+        
+        # Executing a SQL query to insert datetime into table
+        
+    #     read_file = open('pre_processed_data.json')
+    #     data = json.load(read_file)
+        
+        cursor.execute("INSERT INTO json_table (json_string, timestamp) VALUES (%s, %s)", (data, currDate))
+        connection.commit()
+        print("1 item inserted successfully")
+
+    #     # Executing a SQL query
+    #     cursor.execute("SELECT json_string FROM json_table;")
+    #     # Fetch result
+    #     record = cursor.fetchone()
+    #     print("You are connected to - ", record, "\n")
+
+    except (Exception, Error) as error:
+        print("Error while connecting to PostgreSQL", error)
+    finally:
+        if (connection):
+            cursor.close()
+            connection.close()
+            print("PostgreSQL connection is closed")
+        return None
 
 def analysis(date):    # Read data from PostgreSQL database table and load into a DataFrame instance
+    print("Log---Initiated analysis")
     stop_words = stopwords.words('english')
     dbConnection = engine.connect()
     dataFrame = pd.read_sql("select * from \"json_table\" where DATE(timestamp) = '{}'".format(date), dbConnection)
@@ -393,15 +562,15 @@ def analysis(date):    # Read data from PostgreSQL database table and load into 
         cursor = connection.cursor()
         cursor.execute("INSERT INTO html_table (html_string, timestamp) VALUES (%s, %s)", (vis_html, currDate))
         connection.commit()
-        print("1 item inserted successfully")
+        print("Log---1 item inserted successfully")
 
     except (Exception, Error) as error:
-        print("Error while connecting to PostgreSQL", error)
+        print("Log---Error while connecting to PostgreSQL", error)
     finally:
         if (connection):
             cursor.close()
             connection.close()
-            print("PostgreSQL connection is closed")
+            print("Log---PostgreSQL connection is closed")
      
 if __name__ == '__main__':
 
