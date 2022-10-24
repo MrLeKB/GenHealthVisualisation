@@ -16,11 +16,11 @@ def func():
      print("__________Task 1 assigned to thread: {}".format(threading.current_thread().name)) 
      x=0
      while True:
-          if x>100000:
+          if x>10000000:
               break
-          if x% 1000 == 0:
-               print("Log--------------%s" % ( x))   
-          x+1
+          if x% 100000 == 0:
+               print("Log--------------%s" % (x))   
+          x+=1
 
 
 @app.route("/twitter_aug")
