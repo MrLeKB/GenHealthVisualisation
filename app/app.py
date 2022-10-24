@@ -11,10 +11,6 @@ import json
 import nltk
 #Sentiment Analysis
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from nltk import FreqDist
-from nltk import word_tokenize, pos_tag
-from nltk.stem import WordNetLemmatizer
-nltk.download("stopwords")
 from nltk.corpus import stopwords
 stop_words = stopwords.words('english')
 import re
