@@ -43,8 +43,9 @@
       reqVis(previousMonth)
   
       function reqVis(input){
+        request=`request_html/${input}`
         $(function(){
-        $("#includedContent").load("twitter_aug"); 
+        $("#includedContent").load(request); 
         });  
         }
   
