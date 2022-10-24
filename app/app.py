@@ -22,9 +22,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 stop_words = stopwords.words('english')
 from nltk.corpus import wordnet
-import matplotlib.pyplot as plt
 import re
-import string
 import math
 # Gensim
 import gensim
@@ -36,7 +34,6 @@ import spacy
 # Plotting tools
 import pyLDAvis
 import pyLDAvis.gensim_models as gensimvis # don't skip this
-import matplotlib.pyplot as plt
 import sqlalchemy
 from sqlalchemy import create_engine
 
