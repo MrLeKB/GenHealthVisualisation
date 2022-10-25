@@ -53,6 +53,7 @@ def request_html(date):
     #dbConnection.close()
     # pd.set_option('display.expand_frame_repr', False)
     # html_str = dataFrame.iloc[0,0]
+    initialise_analysis()
 
     html_str="<div>helloe</div>"
     print("requested_html")
