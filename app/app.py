@@ -40,57 +40,82 @@ engine = create_engine('postgresql+psycopg2://pvahbfuxwqhvpq:3837ad2efc075df162e
 
 @app.route("/")
 def index():
-    for thread in threading.enumerate(): 
-        print(thread.name)
     return render_template("FinalVisualisation.html")
 
 @app.route("/request_html/<date>")
 def request_html(date):
     print("Log---Retrieving html file from {}".format(date))
-    #dbConnection = engine.connect()
+    dbConnection = engine.connect()
     # Read data from PostgreSQL database table and load into a DataFrame instance
-    # dataFrame = pd.read_sql("select * from \"html_table\"", dbConnection)
-    #dbConnection.close()
-    # pd.set_option('display.expand_frame_repr', False)
-    # html_str = dataFrame.iloc[0,0]
-    initialise_analysis()
-
-    html_str="<div>helloe</div>"
-    print("requested_html")
+    dataFrame = pd.read_sql("select * from \"html_table\"", dbConnection)
+    dbConnection.close()
+    pd.set_option('display.expand_frame_repr', False)
+    html_str = dataFrame.iloc[0,0]
+    if len(html_str)==0:
+        return "<div>No Data Available</div>"
+    print("Log---requested_html")
     return html_str
 
-def initialise_scraper():
-    today = datetime.date.today()
-    first = today.replace(day=1)
-    last_month_last = first - datetime.timedelta(days=1)
-    last_month_first = last_month_last.replace(day=1)
+def checkDataExist(typeReq,date):
+    table=""
+    if typeReq=="analysis":
+        table= "html_table"
+    else:
+        table= "json_table"
+    
+    dbConnection = engine.connect()
+    query='''SELECT timestamp FROM {}
+                        WHERE timestamp = '{}'
+                        '''.format(table,date)
+    df = pd.read_sql(query, dbConnection)
+    if len(df)>0:
+        print("Log---Data for {} already exists".format(date))
+        return True
+    print("Log---Data for {} do not exist".format(date))
+    return False
 
-    start_date= last_month_first.strftime("%Y-%m-%d")
-    end_date= last_month_last.strftime("%Y-%m-%d")
-    #currentYearMonth=datetime.date.today().replace(day=1).strftime('%Y-%m-%d')
-    print("Log---Scheduler:Scraper Request Input {} to {}".format(start_date,end_date))
-    #initialise_analysis(currentYearMonth)
-    scraperThread = threading.Thread(target=scraper,args=(start_date,end_date,))
+def clearJsonTable():
+    dbConnection = engine.connect()
+    common_date_query='''SELECT DISTINCT html_table.timestamp
+                        FROM html_table
+                        INNER JOIN json_table
+                        ON html_table.timestamp = json_table.timestamp
+                        '''
+    common_date_df = pd.read_sql(common_date_query, dbConnection)
+    common_date = common_date_df['timestamp'].to_list()
+    for i in common_date:
+        d= '''DELETE FROM json_table
+                WHERE timestamp = '{}'
+                        '''.format(i)        
+        dbConnection.execute(d)
+    dbConnection.close()
+    print('Log---cleared json data for {}'.format(common_date))
+    return None
+@app.route("/backend/scraper/<user>")    
+def initialise_scraper(user="Scheduler"):
+    scraperThread = threading.Thread(target=scraper, args=(user,))
     try:
         scraperThread.start()
-        print("Log---Scraper completed {} to {}".format(start_date,end_date))
     except:
-        print("Log---Scraper failed {} to {}".format(start_date,end_date))
+        print("Log---Scraper failed")
     return None
-
-def initialise_analysis():
-    currentYearMonth="scheduler testing 1"
-    #currentYearMonth=datetime.date.today().replace(day=1).strftime('%Y-%m-%d')
-    print("Log---Scheduler:Analysis Request Input {}".format(currentYearMonth))
-    #initialise_analysis(currentYearMonth)
-    analysisThread = threading.Thread(target=analysis,args=(currentYearMonth,))
+@app.route("/backend/analysis/<user>") 
+def initialise_analysis(user="Scheduler"):
+    analysisThread = threading.Thread(target=analysis,args=(user,))
     try:
         analysisThread.start()
     except:
-        print("Log---Analysis failed{}".format(currentYearMonth))
+        print("Log---Analysis failed")
     return None
 
-def scraper(start_date,end_date):
+def scraper(user):
+    Json_req= checkDate("scraper",user)
+    if Json_req == False:
+        return None
+    start_date=Json_req[0]
+    end_date=Json_req[1]
+    print("Log---Clearing json table to free up storage space")
+    clearJsonTable()
     print("Log---Initiated scraper {} to {}".format(start_date,end_date))
     #initialisation
     keywords =  ['nutrition','health', 'wellness','longevity']
@@ -228,7 +253,7 @@ def scraper(start_date,end_date):
     #Final JSON Output
     data = final_df.to_json(orient="index")
     #Ingestion to Database
-    currDate = "scheduler testing 1"
+    currDate = start_date
 
     try:
         # Connect to an existing database
@@ -264,12 +289,41 @@ def scraper(start_date,end_date):
             connection.close()
             print("PostgreSQL connection is closed")
         return None
+def checkDate(typeReq,user):
+    today = datetime.date.today()
+    print("Log---{} :Request to initiate on {} by {}".format(typeReq,today,user))
+    last_month_last = today.replace(day=1) - datetime.timedelta(days=1)
+    last_month_first = last_month_last.replace(day=1)
+    if today.strftime("%d") != "01" or user !="Scheduler":
+        if checkDataExist(typeReq,last_month_first):           
+            print("Log---{} :Request rejected as data already exists".format(typeReq))
+            return False
+        else:
+            print("Log---{} :Request accepted as data do not exists".format(typeReq))
+    start_date= last_month_first.strftime("%Y-%m-%d")
+    if typeReq =="analysis":        
+        request=start_date
+        print("Log---{} :Request Input {}".format(typeReq,request))
+    else:        
+        end_date= last_month_last.strftime("%Y-%m-%d")
+        request= [start_date, end_date]
+        print("Log---{}: Request Input {} to {}".format(typeReq,request[0],request[1]))
 
-def analysis(date):    # Read data from PostgreSQL database table and load into a DataFrame instance
+    return request
+
+def analysis(user):    # Read data from PostgreSQL database table and load into a DataFrame instance
     print("Log---Initiated analysis")
-    json_df = pd.read_json(request_json(date), orient ='index')
-    json_df=sentiment_analysis(json_df)   
-    data_words=preprocessing(json_df)
+    htmlData= checkDate("analysis",user)
+    if htmlData == False:
+        return None
+    jsonData= request_json(Json_req)
+    if jsonData ==False:
+        return None
+    json_df = pd.read_json(jsonData, orient ='index')
+    json_df=sentiment_analysis(json_df)  
+    print("Log---Preprocessing data for topic modelling") 
+    json_df = contractions(json_df)
+    data_words= get_data_words(json_df)
     data_words_bigrams = make_bigrams(remove_stopwords(data_words),data_words)
     print("Log---Data cleaning phase 2 completed")
     # Create Dictionary
@@ -279,6 +333,7 @@ def analysis(date):    # Read data from PostgreSQL database table and load into 
     corpus = [id2word.doc2bow(text) for text in data_words_bigrams]    
     limit=16; start=4; step=2
     # Can take a long time to run.
+    coherence_values=[]
     coherence_values = compute_coherence_values(dictionary=id2word, corpus=corpus, texts=data_words_bigrams, limit=limit)
     optimal_model=getOptimalModel(coherence_values,corpus,id2word)
     # Select the model and print the topics
@@ -290,9 +345,6 @@ def analysis(date):    # Read data from PostgreSQL database table and load into 
     print("Log---prepared html-------")
     
     #Send HTML to database
-    #currDate = date
-    currDate = "testing 151925102022"
-
     try:
         # Connect to an existing database
         connection = psycopg2.connect(user="pvahbfuxwqhvpq",
@@ -303,7 +355,7 @@ def analysis(date):    # Read data from PostgreSQL database table and load into 
 
         # Create a cursor to perform database operations
         cursor = connection.cursor()
-        cursor.execute("INSERT INTO html_table (html_string, timestamp) VALUES (%s, %s)", (vis_html, currDate))
+        cursor.execute("INSERT INTO html_table (html_string, timestamp) VALUES (%s, %s)", (vis_html, Json_req))
         connection.commit()
         print("Log---1 item inserted successfully")
 
@@ -359,12 +411,13 @@ def expand_contractions(text):
         return contractions_dict[match.group(0)]
     return contractions_re.sub(replace, text)
 
-def request_json(date):
+def request_json(Json_req):
     dbConnection = engine.connect()
-    dataFrame = pd.read_sql("select * from \"json_table\" where timestamp = '{}'".format(date), dbConnection)
+    dataFrame = pd.read_sql("select * from \"json_table\" where timestamp = '{}'".format(Json_req), dbConnection)
     dbConnection.close()
-    print("Log---Retrieved Data from json_table for {}".format(date))
-    
+    print("Log---Retrieved Data from json_table for {}".format(Json_req))
+    if len(dataFrame)==0:
+        return False
     return dataFrame.iloc[0,0]
 def sentiment_analysis(json_df):
     print("Log---Conducting Sentiment Analysis")
@@ -532,15 +585,18 @@ def format_topics_sentences(ldamodel, corpus, texts):
     return(sent_topics_df)
 def remove_stopwords(texts):
     return [[word for word in simple_preprocess(str(doc)) if word not in stopwords.words('english')] for doc in texts]
-def preprocessing(json_df):
-    print("Log---Preprocessing data for topic modelling")
+def get_data_words(json_df):
     #Pre-Processing - Expand contractions, Lowercase and removal of punctuations
+
+    data_words = list(sent_to_words(json_df['Content']))
+    return data_words
+def contractions(json_df):
     #Expand Contractions
     json_df['Content'] = json_df['Content'].apply(lambda x:expand_contractions(x))
     #remove punctuations, numbers,lowercase
     json_df['Content'] = json_df['Content'].apply(clean_text)
-    data_words = list(sent_to_words(json_df['Content']))
-    return data_words
+    return json_df
+
 def make_bigrams(texts,data_words):
     bigram_mod = gensim.models.phrases.Phraser(gensim.models.Phrases(data_words, min_count=5, threshold=30))
     return [bigram_mod[doc] for doc in texts]
