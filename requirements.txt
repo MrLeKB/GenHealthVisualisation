@@ -6,7 +6,6 @@ pandas
 snscrape
 praw == 7.6.0
 numpy
-splitter == 0.1.1
 nltk ==3.6.7
 gensim == 3.8.0
 spacy ==3.0.0

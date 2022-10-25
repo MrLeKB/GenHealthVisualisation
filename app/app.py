@@ -79,7 +79,6 @@ def initialise_scraper():
     return None
 
 def initialise_analysis():
-    
     currentYearMonth="scheduler testing 1"
     #currentYearMonth=datetime.date.today().replace(day=1).strftime('%Y-%m-%d')
     print("Log---Scheduler:Analysis Request Input {}".format(currentYearMonth))
@@ -159,8 +158,7 @@ def scraper(start_date,end_date):
     
 
     #Data Pre-processing
-    df = final_df.copy()
-    df['original_text'] = df.loc[:, 'Content']
+    final_df['original_text'] = final_df.loc[:, 'Content']
 
     #Functions for pre-processing
     def remove_urls (text):
@@ -220,15 +218,15 @@ def scraper(start_date,end_date):
         return " ".join(result)
 
     #Remove URLs
-    df['Content'] = df['Content'].apply(lambda x:remove_urls(x))
+    final_df['Content'] = final_df['Content'].apply(lambda x:remove_urls(x))
     #remove /n, &amp, @usernames, non english characters
-    df['Content'] = df['Content'].apply(lambda x:clean_text_sentiment(x))
+    final_df['Content'] = final_df['Content'].apply(lambda x:clean_text_sentiment(x))
     #remove small words
-    df['Content'] = df['Content'].apply(small_words_removal)
+    final_df['Content'] = final_df['Content'].apply(small_words_removal)
     #remove big words
-    df['Content'] = df['Content'].apply(bigwords_advanced_cleaning)
+    final_df['Content'] = final_df['Content'].apply(bigwords_advanced_cleaning)
     #Final JSON Output
-    data = df.to_json(orient="index")
+    data = final_df.to_json(orient="index")
     #Ingestion to Database
     currDate = "scheduler testing 1"
 
@@ -269,43 +267,25 @@ def scraper(start_date,end_date):
 
 def analysis(date):    # Read data from PostgreSQL database table and load into a DataFrame instance
     print("Log---Initiated analysis")
+    
     stop_words = stopwords.words('english')
-    dbConnection = engine.connect()
-    dataFrame = pd.read_sql("select * from \"json_table\" where timestamp = '{}'".format(date), dbConnection)
-    dbConnection.close()
-    print("Log---Retrieved Data from json_table for {}".format(date))
+    def remove_stopwords(texts):
+        return [[word for word in simple_preprocess(str(doc)) if word not in stop_words] for doc in texts]
+    request_json(date)
+
     #Sentiment Analysis
 
     #Converting json str to df
-    json_str = dataFrame.iloc[0,0]
+    json_str = request_json(date).iloc[0,0]
     json_df = pd.read_json(json_str, orient ='index')
-    df = json_df.copy()
-
     #analysis
-    print("Log---Conducting Sentiment Analysis")
-    sid = SentimentIntensityAnalyzer()
-    #score
-    df['score'] = df['Content'].apply(lambda text:sid.polarity_scores(str(text)))
-
-    #compound score
-    df['compound']  = df['score'].apply(lambda score_dict: score_dict['compound'])
-
-    #compound label
-    df['comp_score'] = df['compound'].apply(lambda c: 'pos' if 0.3<c<=1 else("neu" if -0.3<=c<=0.3 else "neg"))
-
-    df.dropna(inplace=True)
+    json_df=sentiment_analysis(json_df)
     
     #Topic Modelling
     print("Log---Preprocessing data for topic modelling")
+    
     #cleaning post sentiment analysis
-    def clean_text(text):
-        #convert to lowercasing, remove non words and remove digits
-        text = text.lower()
-        text = re.sub(r'\W', ' ', text)
-        text = re.sub(r'\d', ' ', text)
-
-        return text
-
+    
     # Dictionary of English Contractions
     contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
                         "can't": "cannot","can't've": "cannot have",
@@ -344,210 +324,69 @@ def analysis(date):    # Read data from PostgreSQL database table and load into 
                         "y'all've": "you all have", "you'd": "you would","you'd've": "you would have",
                         "you'll": "you will","you'll've": "you will have", "you're": "you are",
                         "you've": "you have"}
-
-    # Regular expression for finding contractions
-    contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()))
-
-    # Function for expanding contractions
     def expand_contractions(text,contractions_dict=contractions_dict):
         def replace(match):
             return contractions_dict[match.group(0)]
         return contractions_re.sub(replace, text)
+    # Regular expression for finding contractions
+    contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()))
+    
+    # Function for expanding contractions
+    
 
     #Pre-Processing - Expand contractions, Lowercase and removal of punctuations
     #Expand Contractions
-    df['Content'] = df['Content'].apply(lambda x:expand_contractions(x))
-
+    json_df['Content'] = json_df['Content'].apply(lambda x:expand_contractions(x))
     #remove punctuations, numbers,lowercase
-    df['Content'] = df['Content'].apply(clean_text)
-
+    json_df['Content'] = json_df['Content'].apply(clean_text)
+    
     #Modelling
     #Convert List into bag of words
-    def sent_to_words(sentences):
-        for sentence in sentences:
-            yield(gensim.utils.simple_preprocess(str(sentence), deacc=True))  # deacc=True removes punctuations
+   
 
-    data_words = list(sent_to_words(df['Content']))
-
+    data_words = list(sent_to_words(json_df['Content']))
     # Build the bigram and trigram models
-    bigram = gensim.models.Phrases(data_words, min_count=5, threshold=30) # higher threshold fewer phrases.
-    trigram = gensim.models.Phrases(bigram[data_words], threshold=30)  
-
     # Faster way to get a sentence clubbed as a trigram/bigram
-    bigram_mod = gensim.models.phrases.Phraser(bigram)
-    trigram_mod = gensim.models.phrases.Phraser(trigram)
-
-    # Define functions for stopwords, bigrams, trigrams and lemmatization
-    def remove_stopwords(texts):
-        return [[word for word in simple_preprocess(str(doc)) if word not in stop_words] for doc in texts]
-
+    bigram_mod = gensim.models.phrases.Phraser(gensim.models.Phrases(data_words, min_count=5, threshold=30))
     def make_bigrams(texts):
         return [bigram_mod[doc] for doc in texts]
-
-    def make_trigrams(texts):
-        return [trigram_mod[bigram_mod[doc]] for doc in texts]
-
-    def lemmatization(texts, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
-        """https://spacy.io/api/annotation"""
-        texts_out = []
-        for sent in texts:
-            doc = nlp(" ".join(sent)) 
-            texts_out.append([token.lemma_ for token in doc if token.pos_ in allowed_postags])
-        return texts_out
+    
+    # Define functions for stopwords, bigrams, trigrams and lemmatization
 
     # Remove Stop Words
-    data_words_nostops = remove_stopwords(data_words)
-
     # Form Bigrams
-    data_words_bigrams = make_bigrams(data_words_nostops)
-
+    data_words_bigrams = make_bigrams(remove_stopwords(data_words))
     # Initiate spacy for lemmatization
-    nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
-
+    nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])   
     # Do lemmatization keeping only noun, adj, vb, adv
-    data_lemmatized = lemmatization(data_words_bigrams, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV'])
+    #data_lemmatized = lemmatization(data_words_bigrams, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV'])
     print("Log---Data cleaning phase 2 completed")
+    
     # Create Dictionary
-    # id2word = corpora.Dictionary(data_lemmatized)
     id2word = corpora.Dictionary(data_words_bigrams)
     # Create Corpus
     texts = data_words_bigrams
-
     # Term Document Frequency
     corpus = [id2word.doc2bow(text) for text in texts]    
     
-    def compute_coherence_values(dictionary, corpus, texts, limit, start=4, step=2):
-        print("Log---Caculating Optimal number of topics")
-        coherence_values = []
-        model_list = []
-        for num_topics in range(start, limit, step):
-            # model = gensim.models.wrappers.LdaMallet(mallet_path, num_topics=num_topics, id2word=id2word)
-            model = gensim.models.ldamodel.LdaModel(corpus=corpus,
-                                            id2word=id2word,
-                                            num_topics=num_topics, 
-                                            random_state=100)
-            model_list.append(model)
-            coherencemodel = CoherenceModel(model=model, texts=texts, dictionary=dictionary, coherence='c_v')
-            coherence_values.append(coherencemodel.get_coherence())
-        return model_list, coherence_values
+    
 
     limit=16; start=4; step=2
     # Can take a long time to run.
-    model_list, coherence_values = compute_coherence_values(dictionary=id2word, corpus=corpus, texts=texts, limit=limit)
-
-    # Print the coherence scores
-    coherence_score_dict = {}
-    x = range(start, limit, step)
-    for m, cv in zip(x, coherence_values):
-        coherence_score_dict[m] = round(cv, 4)
-
-    def calculate_optimal_coherence(dict_cv):
-        cv = 0
-        current_cv = dict_cv[4]
-        count = 0
-        for key, val in dict_cv.items():
-            if val<current_cv:
-                return count-1
-            else:
-                current_cv = val
-                count+=1
-        return count-1
-
-    optimal = calculate_optimal_coherence(coherence_score_dict)
-
+    coherence_values = compute_coherence_values(dictionary=id2word, corpus=corpus, texts=texts, limit=limit)
+    print(coherence_values)
+    
+    optimal_model=getOptimalModel(coherence_values,corpus,id2word)
     # Select the model and print the topics
-    optimal_model = model_list[optimal]
-    model_topics = optimal_model.show_topics(formatted=False)
     print("Log---Selected optimal topics")
+    
     #Merging Sentiment Analysis with Topic Modelling
-    def format_topics_sentences(ldamodel=optimal_model, corpus=corpus, texts=df):
-        # Init output
-        sent_topics_df = pd.DataFrame()
-
-        # Get main topic in each document
-        for i, row in enumerate(ldamodel[corpus]):
-            row = sorted(row, key=lambda x: (x[1]), reverse=True)
-            # Get the Dominant topic, Perc Contribution and Keywords for each document
-            for j, (topic_num, prop_topic) in enumerate(row):
-                if j == 0:  # => dominant topic
-                    wp = ldamodel.show_topic(topic_num)
-                    topic_keywords = ", ".join([word for word, prop in wp])
-                    sent_topics_df = sent_topics_df.append(pd.Series([int(topic_num), round(prop_topic,4), topic_keywords]), ignore_index=True)
-                else:
-                    break
-        sent_topics_df.columns = ['Dominant_Topic', 'Perc_Contribution', 'Topic_Keywords']
-
-        # Add original text to the end of the output
-        contents = texts.squeeze()
-        sent_topics_df = pd.concat([sent_topics_df, contents], axis=1)
-        return(sent_topics_df)
-
-    #Dominant Topic
-    print("Log---Preparing Dominant Topics")
-    df_topic_sents_keywords = format_topics_sentences(ldamodel=optimal_model, corpus=corpus, texts=df)
-    # Format
-    df_dominant_topic = df_topic_sents_keywords.reset_index()
-    df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Content', 'Datetime', 'orginal_text','score','compound','comp_score']
-
-    #Dominant Topic Docs
-    df_dominant_docs = df_dominant_topic.copy()
-    top_dominant_topic_docs = {}
-    no_of_topics = list(df_dominant_docs.Dominant_Topic.unique())
-
-    for topic_no in no_of_topics:
-        if not math.isnan(topic_no):
-            top_dominant_topic_docs[topic_no] = {}
-            #Overall
-            df_topic = df_dominant_docs.copy()
-            df_topic = df_topic[df_topic["Dominant_Topic"]==topic_no]
-            df_topic.sort_values(by='Topic_Perc_Contrib', ascending=False, inplace=True)
-            top_dominant_topic_docs[topic_no]['mean'] = list(df_topic["orginal_text"][:3])
-            
-            #Positive
-            df_pos = df_dominant_docs.copy()
-            df_pos = df_pos[df_pos["Dominant_Topic"]==topic_no]
-            df_pos = df_pos[df_pos["comp_score"]=="pos"]
-            df_pos.sort_values(by='Topic_Perc_Contrib', ascending=False, inplace=True)
-            top_dominant_topic_docs[topic_no]['pos'] = list(df_pos["orginal_text"][:3])
-                                                                    
-            #Neutral
-            df_neu = df_dominant_docs.copy()
-            df_neu = df_neu[df_neu["Dominant_Topic"]==topic_no]
-            df_neu = df_neu[df_neu["comp_score"]=="neu"]
-            df_neu.sort_values(by='Topic_Perc_Contrib', ascending=False, inplace=True)
-            top_dominant_topic_docs[topic_no]['neu'] = list(df_neu["orginal_text"][:3])
-            
-            #Negative
-            df_neg = df_dominant_docs.copy()
-            df_neg = df_neg[df_neg["Dominant_Topic"]==topic_no]
-            df_neg = df_neg[df_neg["comp_score"]=="neg"]
-            df_neg.sort_values(by='Topic_Perc_Contrib', ascending=False, inplace=True)
-            top_dominant_topic_docs[topic_no]['neg'] = list(df_neg["orginal_text"][:3])
-
-    #Topic Sentiments
-    print("Log---Preparing Topic Sentiment")
-    topic_sentiment={}
-    for i in range(len(df_dominant_topic.groupby(['Dominant_Topic']).mean())):
-        topic_df=df_dominant_topic[df_dominant_topic['Dominant_Topic']==i]
-        mean=topic_df['compound'].mean()
-        sd=topic_df['compound'].std()
-        size= len(topic_df)
-        pos= round(len(topic_df[(topic_df['compound']>0.3)&(topic_df['compound']<=1)])/size,2)
-        neg= round(len(topic_df[(topic_df['compound']>=-1)&(topic_df['compound']<-0.3)]) /size,2)
-        neu= round(len(topic_df[(topic_df['compound']>=-0.3)&(topic_df['compound']<=0.3)]) /size,2)
-
-        topic_sentiment[i] = {}
-        topic_sentiment[i]['mean'] = [mean, top_dominant_topic_docs[i]['mean']]
-        topic_sentiment[i]['pos'] = [pos, top_dominant_topic_docs[i]['pos']]
-        topic_sentiment[i]['neg'] = [neg, top_dominant_topic_docs[i]['neg']]
-        topic_sentiment[i]['neu'] = [neu, top_dominant_topic_docs[i]['neu']]
-
-    #Create Visualisation
-    sentiment = json.dumps(topic_sentiment).replace("https://", "")
+    sentiment = sentimentInfo(optimal_model,corpus,json_df)
+    vis_html= prepareHTML(optimal_model,corpus,id2word,sentiment)
     # Visualize the topics
-    vis = gensimvis.prepare(topic_model=optimal_model, corpus = corpus, dictionary = id2word, sentiment=sentiment)
-    vis_html = pyLDAvis.prepared_data_to_html(vis)
+   
     print("Log---prepared html-------")
+    
     #Send HTML to database
     #currDate = date
     currDate = "testing 110725102022"
@@ -573,7 +412,180 @@ def analysis(date):    # Read data from PostgreSQL database table and load into 
             cursor.close()
             connection.close()
             print("Log---PostgreSQL connection is closed")
-     
+
+
+def request_json(date):
+    dbConnection = engine.connect()
+    dataFrame = pd.read_sql("select * from \"json_table\" where timestamp = '{}'".format(date), dbConnection)
+    dbConnection.close()
+    print("Log---Retrieved Data from json_table for {}".format(date))
+    
+    return dataFrame
+def sentiment_analysis(json_df):
+    print("Log---Conducting Sentiment Analysis")
+    
+    sid = SentimentIntensityAnalyzer()
+    #score
+    json_df['score'] = json_df['Content'].apply(lambda text:sid.polarity_scores(str(text)))
+    #compound score
+    json_df['compound']  = json_df['score'].apply(lambda score_dict: score_dict['compound'])
+
+    #compound label
+    json_df['comp_score'] = json_df['compound'].apply(lambda c: 'pos' if 0.3<c<=1 else("neu" if -0.3<=c<=0.3 else "neg"))
+    json_df.dropna(inplace=True)
+    return json_df
+def clean_text(text):
+        #convert to lowercasing, remove non words and remove digits
+        text = text.lower()
+        text = re.sub(r'\W', ' ', text)
+        text = re.sub(r'\d', ' ', text)
+        return text
+def sent_to_words(sentences):
+    for sentence in sentences:
+        yield(gensim.utils.simple_preprocess(str(sentence), deacc=True))  # deacc=True removes punctuations
+
+def lemmatization(texts, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
+    """https://spacy.io/api/annotation"""
+    texts_out = []
+    for sent in texts:
+        doc = nlp(" ".join(sent)) 
+        texts_out.append([token.lemma_ for token in doc if token.pos_ in allowed_postags])
+    return texts_out
+
+def compute_coherence_values(dictionary, corpus, texts, limit, start=4, step=2):
+    print("Log---Computing coherence scores")
+    coherence_values = []
+    count=0
+    #model_list = []
+    for num_topics in range(start, limit, step):
+        # model = gensim.models.wrappers.LdaMallet(mallet_path, num_topics=num_topics, id2word=id2word)
+        model = gensim.models.ldamodel.LdaModel(corpus=corpus,
+                                        id2word=dictionary,
+                                        num_topics=num_topics, 
+                                        random_state=100)
+        #model_list.append(model)
+        
+        coherencemodel = CoherenceModel(model=model, texts=texts, dictionary=dictionary, coherence='c_v',processes=1)
+        coherence_values.append(coherencemodel.get_coherence())
+        print("Log---Coherence Score of {} topics is {}".format(count*2+4,coherence_values[count]))
+        count+=1
+
+        
+    #return model_list, 
+    return coherence_values
+
+def calculate_optimal_coherence(coherence_values):
+    print("Log---Caculating Optimal number of topics")
+    print(coherence_values)
+    current_cv = 0
+    count=0
+    for i in range(len(coherence_values)):
+        print(coherence_values[i])
+        if coherence_values[i]<current_cv:
+            return i-1
+        else:
+            current_cv = coherence_values[i]
+            count=i
+    return count
+def getOptimalModel(coherence_values,corpus,dictionary):
+    index = calculate_optimal_coherence(coherence_values)
+    optimalTopics= 4+index*2
+    print("Log---Optimal Number of Topics as {}".format(optimalTopics))
+    model = gensim.models.ldamodel.LdaModel(corpus=corpus,
+                                    id2word=dictionary,
+                                    num_topics=optimalTopics, 
+                                    random_state=100)
+    return model
+def dominantTopicDoc(df_dominant_topic):
+    top_dominant_topic_docs = {}
+    no_of_topics = list(df_dominant_topic.Dominant_Topic.unique())
+    
+    for topic_no in no_of_topics:
+        if not math.isnan(topic_no):
+            top_dominant_topic_docs[topic_no] = {}
+            #Overall
+            df_topic = df_dominant_topic[df_dominant_topic["Dominant_Topic"]==topic_no]
+            df_topic.sort_values(by='Topic_Perc_Contrib', ascending=False, inplace=True)
+            top_dominant_topic_docs[topic_no]['mean'] = list(df_topic["orginal_text"][:3])
+            
+            #Positive
+            df_pos = df_dominant_topic[df_dominant_topic["Dominant_Topic"]==topic_no]
+            df_pos = df_pos[df_pos["comp_score"]=="pos"]
+            df_pos.sort_values(by='Topic_Perc_Contrib', ascending=False, inplace=True)
+            top_dominant_topic_docs[topic_no]['pos'] = list(df_pos["orginal_text"][:3])
+                                                                    
+            #Neutral
+            df_neu = df_dominant_topic[df_dominant_topic["Dominant_Topic"]==topic_no]
+            df_neu = df_neu[df_neu["comp_score"]=="neu"]
+            df_neu.sort_values(by='Topic_Perc_Contrib', ascending=False, inplace=True)
+            top_dominant_topic_docs[topic_no]['neu'] = list(df_neu["orginal_text"][:3])
+            
+            #Negative
+            df_neg = df_dominant_topic[df_dominant_topic["Dominant_Topic"]==topic_no]
+            df_neg = df_neg[df_neg["comp_score"]=="neg"]
+            df_neg.sort_values(by='Topic_Perc_Contrib', ascending=False, inplace=True)
+            top_dominant_topic_docs[topic_no]['neg'] = list(df_neg["orginal_text"][:3])
+    return top_dominant_topic_docs
+def topicSentiments(df_dominant_topic):
+    print("Log---Preparing Topic Sentiment")
+    top_dominant_topic_docs = dominantTopicDoc(df_dominant_topic)
+    topic_sentiment={}
+    for i in range(len(df_dominant_topic.groupby(['Dominant_Topic']).mean())):
+        topic_df=df_dominant_topic[df_dominant_topic['Dominant_Topic']==i]
+        mean=topic_df['compound'].mean()
+        sd=topic_df['compound'].std()
+        size= len(topic_df)
+        pos= round(len(topic_df[(topic_df['compound']>0.3)&(topic_df['compound']<=1)])/size,2)
+        neg= round(len(topic_df[(topic_df['compound']>=-1)&(topic_df['compound']<-0.3)]) /size,2)
+        neu= round(len(topic_df[(topic_df['compound']>=-0.3)&(topic_df['compound']<=0.3)]) /size,2)
+
+        topic_sentiment[i] = {}
+        topic_sentiment[i]['mean'] = [mean, top_dominant_topic_docs[i]['mean']]
+        topic_sentiment[i]['pos'] = [pos, top_dominant_topic_docs[i]['pos']]
+        topic_sentiment[i]['neg'] = [neg, top_dominant_topic_docs[i]['neg']]
+        topic_sentiment[i]['neu'] = [neu, top_dominant_topic_docs[i]['neu']]
+    return topic_sentiment
+def sentimentInfo(optimal_model,corpus,json_df):
+    #Dominant Topic
+    print("Log---Preparing Dominant Topics")
+    
+    df_topic_sents_keywords = format_topics_sentences(ldamodel=optimal_model, corpus=corpus, texts=json_df)
+    # Format
+    df_dominant_topic = df_topic_sents_keywords.reset_index()
+    df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Content', 'Datetime', 'orginal_text','score','compound','comp_score']
+
+    #Dominant Topic Docs
+    #Topic Sentiments
+    #Create Visualisation
+    sentiment = json.dumps(topicSentiments(df_dominant_topic)).replace("https://", "")
+    return sentiment
+
+def prepareHTML(optimal_model,corpus,id2word,sentiment):
+    vis = gensimvis.prepare(topic_model=optimal_model, corpus = corpus, dictionary = id2word, sentiment=sentiment)
+    vis_html = pyLDAvis.prepared_data_to_html(vis)
+    return vis_html
+def format_topics_sentences(ldamodel, corpus, texts):
+    # Init output
+    sent_topics_df = pd.DataFrame()
+
+    # Get main topic in each document
+    for i, row in enumerate(ldamodel[corpus]):
+        row = sorted(row, key=lambda x: (x[1]), reverse=True)
+        # Get the Dominant topic, Perc Contribution and Keywords for each document
+        for j, (topic_num, prop_topic) in enumerate(row):
+            if j == 0:  # => dominant topic
+                wp = ldamodel.show_topic(topic_num)
+                topic_keywords = ", ".join([word for word, prop in wp])
+                sent_topics_df = sent_topics_df.append(pd.Series([int(topic_num), round(prop_topic,4), topic_keywords]), ignore_index=True)
+            else:
+                break
+    sent_topics_df.columns = ['Dominant_Topic', 'Perc_Contribution', 'Topic_Keywords']
+
+    # Add original text to the end of the output
+    contents = texts.squeeze()
+    sent_topics_df = pd.concat([sent_topics_df, contents], axis=1)
+    return(sent_topics_df)
+
 if __name__ == '__main__':
 
     app.run(host='0.0.0.0', port=5000, debug=True)
