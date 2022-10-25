@@ -13,3 +13,4 @@ spacy ==3.4.1
 future
 funcy
 wordninja==2.0.0
+./en_core_web_sm-2.2.5.tar.gz
