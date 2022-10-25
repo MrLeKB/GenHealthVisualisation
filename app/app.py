@@ -92,31 +92,36 @@ def clearJsonTable():
     dbConnection.close()
     print('Log---cleared json data for {}'.format(common_date))
     return 'Log---cleared json data for {}'.format(common_date)
+
 @app.route("/backend/scraper/<user>")    
 def initialise_scraper(user="Scheduler"):
-    scraperThread = threading.Thread(target=scraper, args=(user,))
-    log =""
+    json_req=checkDate("analysis", user)
+    if json_req == False:
+        return "Log---:Request rejected as data already exists"
+    scraperThread = threading.Thread(target=scraper, args=(json_req,))
     try:
-        log = scraperThread.start()
+        scraperThread.start()
     except:
         print("Log---Scraper failed")
-    return log
+    return json_req
+
 @app.route("/backend/analysis/<user>") 
 def initialise_analysis(user="Scheduler"):
-    analysisThread = threading.Thread(target=analysis,args=(user,))
-    log =""
+    json_req=checkDate("analysis", user)
+    if json_req == False:
+        return "Log---:Request rejected as data already exists"
+    analysisThread = threading.Thread(target=analysis,args=(json_req,))
     try:
-        log = analysisThread.start()
+        analysisThread.start()
     except:
         print("Log---Analysis failed")
-    return log
+    return json_req
 
-def scraper(user):
-    Json_req= checkDate("scraper",user)
-    if Json_req == False:
-        return "Log---{} :Request rejected as data already exists".format(user)
-    start_date=Json_req[0]
-    end_date=Json_req[1]
+def scraper(json_req):
+    if json_req == False:
+        return "Log---Request rejected as data already exists"
+    start_date=json_req[0]
+    end_date=json_req[1]
     print("Log---Clearing json table to free up storage space")
     clearJsonTable()
     print("Log---Initiated scraper {} to {}".format(start_date,end_date))
@@ -258,39 +263,39 @@ def scraper(user):
     #Ingestion to Database
     currDate = start_date
 
-    try:
-        # Connect to an existing database
-        connection = psycopg2.connect(user="pvahbfuxwqhvpq",
-                                    password="3837ad2efc075df162ec73cc54d80e55b1aff7a1098b0eb5916502107f4b97bb",
-                                    host="ec2-34-194-40-194.compute-1.amazonaws.com",
-                                    port="5432",
-                                    database="dcrh9u79n7rtsa")
+    # try:
+    #     # Connect to an existing database
+    #     connection = psycopg2.connect(user="pvahbfuxwqhvpq",
+    #                                 password="3837ad2efc075df162ec73cc54d80e55b1aff7a1098b0eb5916502107f4b97bb",
+    #                                 host="ec2-34-194-40-194.compute-1.amazonaws.com",
+    #                                 port="5432",
+    #                                 database="dcrh9u79n7rtsa")
 
-        # Create a cursor to perform database operations
-        cursor = connection.cursor()
+    #     # Create a cursor to perform database operations
+    #     cursor = connection.cursor()
         
-        # Executing a SQL query to insert datetime into table
+    #     # Executing a SQL query to insert datetime into table
         
-    #     read_file = open('pre_processed_data.json')
-    #     data = json.load(read_file)
+    # #     read_file = open('pre_processed_data.json')
+    # #     data = json.load(read_file)
         
-        cursor.execute("INSERT INTO json_table (json_string, timestamp) VALUES (%s, %s)", (data, currDate))
-        connection.commit()
-        print("1 item inserted successfully")
+    #     cursor.execute("INSERT INTO json_table (json_string, timestamp) VALUES (%s, %s)", (data, currDate))
+    #     connection.commit()
+    #     print("1 item inserted successfully")
 
-    #     # Executing a SQL query
-    #     cursor.execute("SELECT json_string FROM json_table;")
-    #     # Fetch result
-    #     record = cursor.fetchone()
-    #     print("You are connected to - ", record, "\n")
+    # #     # Executing a SQL query
+    # #     cursor.execute("SELECT json_string FROM json_table;")
+    # #     # Fetch result
+    # #     record = cursor.fetchone()
+    # #     print("You are connected to - ", record, "\n")
 
-    except (Exception, Error) as error:
-        print("Error while connecting to PostgreSQL", error)
-    finally:
-        if (connection):
-            cursor.close()
-            connection.close()
-            print("PostgreSQL connection is closed")
+    # except (Exception, Error) as error:
+    #     print("Error while connecting to PostgreSQL", error)
+    # finally:
+    #     if (connection):
+    #         cursor.close()
+    #         connection.close()
+    #         print("PostgreSQL connection is closed")
     return "Log---Scraper completed data collection"
 def checkDate(typeReq,user):
     today = datetime.date.today()
@@ -314,11 +319,8 @@ def checkDate(typeReq,user):
 
     return request
 
-def analysis(user):    # Read data from PostgreSQL database table and load into a DataFrame instance
+def analysis(jsonReq):    # Read data from PostgreSQL database table and load into a DataFrame instance
     print("Log---Initiated analysis")
-    jsonReq= checkDate("analysis",user)
-    if jsonReq == False:
-        return "Log---{} :Request rejected as data already exists".format(user)
     jsonData= request_json(jsonReq)
     if jsonData ==False:
         return "Log---Analysis failed no data collected for {}".format(jsonReq)
@@ -334,7 +336,7 @@ def analysis(user):    # Read data from PostgreSQL database table and load into 
     # Create Corpus
     # Term Document Frequency
     corpus = [id2word.doc2bow(text) for text in data_words_bigrams]    
-    limit=16; start=4; step=2
+    limit=20; start=6; step=2
     # Can take a long time to run.
     coherence_values=[]
     coherence_values = compute_coherence_values(dictionary=id2word, corpus=corpus, texts=data_words_bigrams, limit=limit)
@@ -347,28 +349,28 @@ def analysis(user):    # Read data from PostgreSQL database table and load into 
     vis_html= prepareHTML(optimal_model,corpus,id2word,sentiment)
     print("Log---prepared html-------")
     
-    #Send HTML to database
-    try:
-        # Connect to an existing database
-        connection = psycopg2.connect(user="pvahbfuxwqhvpq",
-                                    password="3837ad2efc075df162ec73cc54d80e55b1aff7a1098b0eb5916502107f4b97bb",
-                                    host="ec2-34-194-40-194.compute-1.amazonaws.com",
-                                    port="5432",
-                                    database="dcrh9u79n7rtsa")
+    # #Send HTML to database
+    # try:
+    #     # Connect to an existing database
+    #     connection = psycopg2.connect(user="pvahbfuxwqhvpq",
+    #                                 password="3837ad2efc075df162ec73cc54d80e55b1aff7a1098b0eb5916502107f4b97bb",
+    #                                 host="ec2-34-194-40-194.compute-1.amazonaws.com",
+    #                                 port="5432",
+    #                                 database="dcrh9u79n7rtsa")
 
-        # Create a cursor to perform database operations
-        cursor = connection.cursor()
-        cursor.execute("INSERT INTO html_table (html_string, timestamp) VALUES (%s, %s)", (vis_html, jsonReq))
-        connection.commit()
-        print("Log---1 item inserted successfully")
+    #     # Create a cursor to perform database operations
+    #     cursor = connection.cursor()
+    #     cursor.execute("INSERT INTO html_table (html_string, timestamp) VALUES (%s, %s)", (vis_html, jsonReq))
+    #     connection.commit()
+    #     print("Log---1 item inserted successfully")
 
-    except (Exception, Error) as error:
-        print("Log---Error while connecting to PostgreSQL", error)
-    finally:
-        if (connection):
-            cursor.close()
-            connection.close()
-            print("Log---PostgreSQL connection is closed")
+    # except (Exception, Error) as error:
+    #     print("Log---Error while connecting to PostgreSQL", error)
+    # finally:
+    #     if (connection):
+    #         cursor.close()
+    #         connection.close()
+    #         print("Log---PostgreSQL connection is closed")
     return "Log---Analysis completed"
 def expand_contractions(text):
         # Dictionary of English Contractions
@@ -415,11 +417,11 @@ def expand_contractions(text):
         return contractions_dict[match.group(0)]
     return contractions_re.sub(replace, text)
 
-def request_json(Json_req):
+def request_json(json_req):
     dbConnection = engine.connect()
-    dataFrame = pd.read_sql("select * from \"json_table\" where timestamp = '{}'".format(Json_req), dbConnection)
+    dataFrame = pd.read_sql("select * from \"json_table\" where timestamp = '{}'".format(json_req), dbConnection)
     dbConnection.close()
-    print("Log---Retrieved Data from json_table for {}".format(Json_req))
+    print("Log---Retrieved Data from json_table for {}".format(json_req))
     if len(dataFrame)==0:
         return False
     return dataFrame.iloc[0,0]
@@ -456,7 +458,7 @@ def lemmatization(texts, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
         texts_out.append([token.lemma_ for token in doc if token.pos_ in allowed_postags])
     return texts_out
 
-def compute_coherence_values(dictionary, corpus, texts, limit, start=4, step=2):
+def compute_coherence_values(dictionary, corpus, texts, limit, start=6, step=2):
     print("Log---Computing coherence scores")
     coherence_values = []
     count=0
@@ -491,7 +493,7 @@ def calculate_optimal_coherence(coherence_values):
     return count
 def getOptimalModel(coherence_values,corpus,dictionary):
     index = calculate_optimal_coherence(coherence_values)
-    optimalTopics= 4+index*2
+    optimalTopics= 6+index*2
     print("Log---Optimal Number of Topics as {}".format(optimalTopics))
     model = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                     id2word=dictionary,

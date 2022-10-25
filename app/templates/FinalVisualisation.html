@@ -102,20 +102,20 @@
         }
 
       function runScraper(user){
+        alert("Running webscraper");
         fetch(`/backend/scraper/${user}`)
           .then(function (response) {
               return response.text();
           }).then(function (text) {
-              console.log('GET response text:');
               console.log(text); 
           });}
 
       function runAnalysis(user){
+        alert("Running analysis");
         fetch(`/backend/analysis/${user}`)
           .then(function (response) {
               return response.text();
           }).then(function (text) {
-              console.log('GET response text:');
               console.log(text); 
           });}
 
