@@ -94,8 +94,8 @@
   
       reqVis(previousMonth)
   
-      function reqVis(input){
-        request=`request_html/${input}`
+      function reqVis(input=NaN){
+        request=`request_html/${document.getElementById("monthInput").value}`
         $(function(){
         $("#includedContent").load(request); 
         });  

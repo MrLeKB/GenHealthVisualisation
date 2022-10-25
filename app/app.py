@@ -336,7 +336,7 @@ def analysis(jsonReq):    # Read data from PostgreSQL database table and load in
     # Create Corpus
     # Term Document Frequency
     corpus = [id2word.doc2bow(text) for text in data_words_bigrams]    
-    limit=20; start=6; step=2
+    limit=16; start=6; step=2
     # Can take a long time to run.
     coherence_values=[]
     coherence_values = compute_coherence_values(dictionary=id2word, corpus=corpus, texts=data_words_bigrams, limit=limit)
@@ -473,7 +473,7 @@ def compute_coherence_values(dictionary, corpus, texts, limit, start=6, step=2):
         
         coherencemodel = CoherenceModel(model=model, texts=texts, dictionary=dictionary, coherence='c_v',processes=1)
         coherence_values.append(coherencemodel.get_coherence())
-        print("Log---Coherence Score of {} topics is {}".format(count*2+4,coherence_values[count]))
+        print("Log---Coherence Score of {} topics is {}".format(count*2+6,coherence_values[count]))
         count+=1
 
         
