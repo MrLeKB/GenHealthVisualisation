@@ -9,7 +9,7 @@ numpy
 splitter == 0.1.1
 nltk ==3.6.7
 gensim == 3.8.0
-spacy ==3.4.1
+spacy ==3.0.0
 future
 funcy
 wordninja==2.0.0

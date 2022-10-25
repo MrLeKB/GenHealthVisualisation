@@ -549,7 +549,8 @@ def analysis(date):    # Read data from PostgreSQL database table and load into 
     vis_html = pyLDAvis.prepared_data_to_html(vis)
     print("Log---prepared html-------")
     #Send HTML to database
-    currDate = date
+    #currDate = date
+    currDate = "testing 110725102022"
 
     try:
         # Connect to an existing database
