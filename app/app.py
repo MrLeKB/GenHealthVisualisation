@@ -270,7 +270,7 @@ def analysis(date):    # Read data from PostgreSQL database table and load into 
     print("Log---Initiated analysis")
     stop_words = stopwords.words('english')
     dbConnection = engine.connect()
-    dataFrame = pd.read_sql("select * from \"json_table\" where DATE(timestamp) = '{}'".format(date), dbConnection)
+    dataFrame = pd.read_sql("select * from \"json_table\" where timestamp = '{}'".format(date), dbConnection)
     dbConnection.close()
     print("Log---Retrieved Data from json_table for {}".format(date))
     #Sentiment Analysis
