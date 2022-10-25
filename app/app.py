@@ -267,26 +267,55 @@ def scraper(start_date,end_date):
 
 def analysis(date):    # Read data from PostgreSQL database table and load into a DataFrame instance
     print("Log---Initiated analysis")
+    json_df = pd.read_json(request_json(date), orient ='index')
+    json_df=sentiment_analysis(json_df)   
+    data_words=preprocessing(json_df)
+    data_words_bigrams = make_bigrams(remove_stopwords(data_words),data_words)
+    print("Log---Data cleaning phase 2 completed")
+    # Create Dictionary
+    id2word = corpora.Dictionary(data_words_bigrams)
+    # Create Corpus
+    # Term Document Frequency
+    corpus = [id2word.doc2bow(text) for text in data_words_bigrams]    
+    limit=16; start=4; step=2
+    # Can take a long time to run.
+    coherence_values = compute_coherence_values(dictionary=id2word, corpus=corpus, texts=data_words_bigrams, limit=limit)
+    optimal_model=getOptimalModel(coherence_values,corpus,id2word)
+    # Select the model and print the topics
+    print("Log---Selected optimal topics")
     
-    stop_words = stopwords.words('english')
-    def remove_stopwords(texts):
-        return [[word for word in simple_preprocess(str(doc)) if word not in stop_words] for doc in texts]
-    request_json(date)
+    #Merging Sentiment Analysis with Topic Modelling
+    sentiment = sentimentInfo(optimal_model,corpus,json_df)
+    vis_html= prepareHTML(optimal_model,corpus,id2word,sentiment)
+    print("Log---prepared html-------")
+    
+    #Send HTML to database
+    #currDate = date
+    currDate = "testing 151925102022"
 
-    #Sentiment Analysis
+    try:
+        # Connect to an existing database
+        connection = psycopg2.connect(user="pvahbfuxwqhvpq",
+                                    password="3837ad2efc075df162ec73cc54d80e55b1aff7a1098b0eb5916502107f4b97bb",
+                                    host="ec2-34-194-40-194.compute-1.amazonaws.com",
+                                    port="5432",
+                                    database="dcrh9u79n7rtsa")
 
-    #Converting json str to df
-    json_str = request_json(date).iloc[0,0]
-    json_df = pd.read_json(json_str, orient ='index')
-    #analysis
-    json_df=sentiment_analysis(json_df)
-    
-    #Topic Modelling
-    print("Log---Preprocessing data for topic modelling")
-    
-    #cleaning post sentiment analysis
-    
-    # Dictionary of English Contractions
+        # Create a cursor to perform database operations
+        cursor = connection.cursor()
+        cursor.execute("INSERT INTO html_table (html_string, timestamp) VALUES (%s, %s)", (vis_html, currDate))
+        connection.commit()
+        print("Log---1 item inserted successfully")
+
+    except (Exception, Error) as error:
+        print("Log---Error while connecting to PostgreSQL", error)
+    finally:
+        if (connection):
+            cursor.close()
+            connection.close()
+            print("Log---PostgreSQL connection is closed")
+def expand_contractions(text):
+        # Dictionary of English Contractions
     contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
                         "can't": "cannot","can't've": "cannot have",
                         "'cause": "because","could've": "could have","couldn't": "could not",
@@ -324,95 +353,11 @@ def analysis(date):    # Read data from PostgreSQL database table and load into 
                         "y'all've": "you all have", "you'd": "you would","you'd've": "you would have",
                         "you'll": "you will","you'll've": "you will have", "you're": "you are",
                         "you've": "you have"}
-    def expand_contractions(text,contractions_dict=contractions_dict):
-        def replace(match):
-            return contractions_dict[match.group(0)]
-        return contractions_re.sub(replace, text)
-    # Regular expression for finding contractions
     contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()))
-    
-    # Function for expanding contractions
-    
 
-    #Pre-Processing - Expand contractions, Lowercase and removal of punctuations
-    #Expand Contractions
-    json_df['Content'] = json_df['Content'].apply(lambda x:expand_contractions(x))
-    #remove punctuations, numbers,lowercase
-    json_df['Content'] = json_df['Content'].apply(clean_text)
-    
-    #Modelling
-    #Convert List into bag of words
-   
-
-    data_words = list(sent_to_words(json_df['Content']))
-    # Build the bigram and trigram models
-    # Faster way to get a sentence clubbed as a trigram/bigram
-    bigram_mod = gensim.models.phrases.Phraser(gensim.models.Phrases(data_words, min_count=5, threshold=30))
-    def make_bigrams(texts):
-        return [bigram_mod[doc] for doc in texts]
-    
-    # Define functions for stopwords, bigrams, trigrams and lemmatization
-
-    # Remove Stop Words
-    # Form Bigrams
-    data_words_bigrams = make_bigrams(remove_stopwords(data_words))
-    # Initiate spacy for lemmatization
-    nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])   
-    # Do lemmatization keeping only noun, adj, vb, adv
-    #data_lemmatized = lemmatization(data_words_bigrams, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV'])
-    print("Log---Data cleaning phase 2 completed")
-    
-    # Create Dictionary
-    id2word = corpora.Dictionary(data_words_bigrams)
-    # Create Corpus
-    texts = data_words_bigrams
-    # Term Document Frequency
-    corpus = [id2word.doc2bow(text) for text in texts]    
-    
-    
-
-    limit=16; start=4; step=2
-    # Can take a long time to run.
-    coherence_values = compute_coherence_values(dictionary=id2word, corpus=corpus, texts=texts, limit=limit)
-    print(coherence_values)
-    
-    optimal_model=getOptimalModel(coherence_values,corpus,id2word)
-    # Select the model and print the topics
-    print("Log---Selected optimal topics")
-    
-    #Merging Sentiment Analysis with Topic Modelling
-    sentiment = sentimentInfo(optimal_model,corpus,json_df)
-    vis_html= prepareHTML(optimal_model,corpus,id2word,sentiment)
-    # Visualize the topics
-   
-    print("Log---prepared html-------")
-    
-    #Send HTML to database
-    #currDate = date
-    currDate = "testing 110725102022"
-
-    try:
-        # Connect to an existing database
-        connection = psycopg2.connect(user="pvahbfuxwqhvpq",
-                                    password="3837ad2efc075df162ec73cc54d80e55b1aff7a1098b0eb5916502107f4b97bb",
-                                    host="ec2-34-194-40-194.compute-1.amazonaws.com",
-                                    port="5432",
-                                    database="dcrh9u79n7rtsa")
-
-        # Create a cursor to perform database operations
-        cursor = connection.cursor()
-        cursor.execute("INSERT INTO html_table (html_string, timestamp) VALUES (%s, %s)", (vis_html, currDate))
-        connection.commit()
-        print("Log---1 item inserted successfully")
-
-    except (Exception, Error) as error:
-        print("Log---Error while connecting to PostgreSQL", error)
-    finally:
-        if (connection):
-            cursor.close()
-            connection.close()
-            print("Log---PostgreSQL connection is closed")
-
+    def replace(match):
+        return contractions_dict[match.group(0)]
+    return contractions_re.sub(replace, text)
 
 def request_json(date):
     dbConnection = engine.connect()
@@ -420,7 +365,7 @@ def request_json(date):
     dbConnection.close()
     print("Log---Retrieved Data from json_table for {}".format(date))
     
-    return dataFrame
+    return dataFrame.iloc[0,0]
 def sentiment_analysis(json_df):
     print("Log---Conducting Sentiment Analysis")
     
@@ -446,6 +391,8 @@ def sent_to_words(sentences):
 
 def lemmatization(texts, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
     """https://spacy.io/api/annotation"""
+        # Initiate spacy for lemmatization
+    nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])  
     texts_out = []
     for sent in texts:
         doc = nlp(" ".join(sent)) 
@@ -476,11 +423,9 @@ def compute_coherence_values(dictionary, corpus, texts, limit, start=4, step=2):
 
 def calculate_optimal_coherence(coherence_values):
     print("Log---Caculating Optimal number of topics")
-    print(coherence_values)
     current_cv = 0
     count=0
     for i in range(len(coherence_values)):
-        print(coherence_values[i])
         if coherence_values[i]<current_cv:
             return i-1
         else:
@@ -585,6 +530,20 @@ def format_topics_sentences(ldamodel, corpus, texts):
     contents = texts.squeeze()
     sent_topics_df = pd.concat([sent_topics_df, contents], axis=1)
     return(sent_topics_df)
+def remove_stopwords(texts):
+    return [[word for word in simple_preprocess(str(doc)) if word not in stopwords.words('english')] for doc in texts]
+def preprocessing(json_df):
+    print("Log---Preprocessing data for topic modelling")
+    #Pre-Processing - Expand contractions, Lowercase and removal of punctuations
+    #Expand Contractions
+    json_df['Content'] = json_df['Content'].apply(lambda x:expand_contractions(x))
+    #remove punctuations, numbers,lowercase
+    json_df['Content'] = json_df['Content'].apply(clean_text)
+    data_words = list(sent_to_words(json_df['Content']))
+    return data_words
+def make_bigrams(texts,data_words):
+    bigram_mod = gensim.models.phrases.Phraser(gensim.models.Phrases(data_words, min_count=5, threshold=30))
+    return [bigram_mod[doc] for doc in texts]
 
 if __name__ == '__main__':
 
