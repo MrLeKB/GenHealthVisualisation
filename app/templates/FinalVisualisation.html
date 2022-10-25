@@ -89,7 +89,7 @@
       year = date.getFullYear();
       month = String(date.getMonth()).padStart(2, '0');
   
-      previousMonth= year+"-"+month
+      previousMonth= year+"-"+month+"01"
       document.getElementById("monthInput").value= previousMonth
   
       reqVis(previousMonth)
