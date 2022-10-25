@@ -15,6 +15,50 @@
       margin-bottom: 10px;
     }
 
+
+    .button {
+      background-color: white;
+      border: none;
+      color: black;
+      padding: 3px 10px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      cursor: pointer; 
+    }
+
+    .tooltip {
+      position: relative;
+      background-color: white;
+      border: none;
+      color: black;
+      padding: 3px 10px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      cursor: pointer; 
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 120px;
+      background-color: black;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 0;
+      
+      /* Position the tooltip */
+      position: absolute;
+      z-index: 1;
+      bottom: 100%;
+      left: 50%;
+      margin-left: -60px;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+    }
   </style> 
   <head> 
     <script src="https://code.jquery.com/jquery-3.6.1.min.js" type="text/javascript"></script>
@@ -26,8 +70,16 @@
         <P id="title">GEN Health Topics of Interest</P>
         <form onsubmit="return false;">
           <input type="month" id="monthInput" name="monthInput">
-          <input type="submit" onclick="reqVis()">
-        </form>      
+          <input type="submit" onclick="reqVis()" style="margin-right:100px;">
+          <div class="tooltip" onclick="runScraper()">Run Scraper
+            <span class="tooltiptext" >Run webscraper to collect data of previous month</span>
+          </div>
+          <div class="tooltip" onclick="runAnalysis()">Run Analysis
+            <span class="tooltiptext">Run analysis on collected data of previous month</span>
+          </div>
+        </form>  
+        
+
     </div>
      <div id="includedContent" style="width: 50%"></div>
 
@@ -48,6 +100,25 @@
         $("#includedContent").load(request); 
         });  
         }
+
+      function runScraper(user){
+        fetch(`/backend/scraper/${user}`)
+          .then(function (response) {
+              return response.text();
+          }).then(function (text) {
+              console.log('GET response text:');
+              console.log(text); 
+          });}
+
+      function runAnalysis(user){
+        fetch(`/backend/analysis/${user}`)
+          .then(function (response) {
+              return response.text();
+          }).then(function (text) {
+              console.log('GET response text:');
+              console.log(text); 
+          });}
+
   
       
       </script> 

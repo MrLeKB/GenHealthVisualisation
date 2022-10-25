@@ -49,10 +49,11 @@ def request_html(date):
     # Read data from PostgreSQL database table and load into a DataFrame instance
     dataFrame = pd.read_sql("select * from \"html_table\"", dbConnection)
     dbConnection.close()
+    if len(dataFrame)==0:
+        return "<div>No Data Available</div>"
     pd.set_option('display.expand_frame_repr', False)
     html_str = dataFrame.iloc[0,0]
-    if len(html_str)==0:
-        return "<div>No Data Available</div>"
+
     print("Log---requested_html")
     return html_str
 
@@ -90,28 +91,30 @@ def clearJsonTable():
         dbConnection.execute(d)
     dbConnection.close()
     print('Log---cleared json data for {}'.format(common_date))
-    return None
+    return 'Log---cleared json data for {}'.format(common_date)
 @app.route("/backend/scraper/<user>")    
 def initialise_scraper(user="Scheduler"):
     scraperThread = threading.Thread(target=scraper, args=(user,))
+    log =""
     try:
-        scraperThread.start()
+        log = scraperThread.start()
     except:
         print("Log---Scraper failed")
-    return None
+    return log
 @app.route("/backend/analysis/<user>") 
 def initialise_analysis(user="Scheduler"):
     analysisThread = threading.Thread(target=analysis,args=(user,))
+    log =""
     try:
-        analysisThread.start()
+        log = analysisThread.start()
     except:
         print("Log---Analysis failed")
-    return None
+    return log
 
 def scraper(user):
     Json_req= checkDate("scraper",user)
     if Json_req == False:
-        return None
+        return "Log---{} :Request rejected as data already exists".format(user)
     start_date=Json_req[0]
     end_date=Json_req[1]
     print("Log---Clearing json table to free up storage space")
@@ -288,7 +291,7 @@ def scraper(user):
             cursor.close()
             connection.close()
             print("PostgreSQL connection is closed")
-        return None
+    return "Log---Scraper completed data collection"
 def checkDate(typeReq,user):
     today = datetime.date.today()
     print("Log---{} :Request to initiate on {} by {}".format(typeReq,today,user))
@@ -313,12 +316,12 @@ def checkDate(typeReq,user):
 
 def analysis(user):    # Read data from PostgreSQL database table and load into a DataFrame instance
     print("Log---Initiated analysis")
-    htmlData= checkDate("analysis",user)
-    if htmlData == False:
-        return None
-    jsonData= request_json(Json_req)
+    jsonReq= checkDate("analysis",user)
+    if jsonReq == False:
+        return "Log---{} :Request rejected as data already exists".format(user)
+    jsonData= request_json(jsonReq)
     if jsonData ==False:
-        return None
+        return "Log---Analysis failed no data collected for {}".format(jsonReq)
     json_df = pd.read_json(jsonData, orient ='index')
     json_df=sentiment_analysis(json_df)  
     print("Log---Preprocessing data for topic modelling") 
@@ -355,7 +358,7 @@ def analysis(user):    # Read data from PostgreSQL database table and load into 
 
         # Create a cursor to perform database operations
         cursor = connection.cursor()
-        cursor.execute("INSERT INTO html_table (html_string, timestamp) VALUES (%s, %s)", (vis_html, Json_req))
+        cursor.execute("INSERT INTO html_table (html_string, timestamp) VALUES (%s, %s)", (vis_html, jsonReq))
         connection.commit()
         print("Log---1 item inserted successfully")
 
@@ -366,6 +369,7 @@ def analysis(user):    # Read data from PostgreSQL database table and load into 
             cursor.close()
             connection.close()
             print("Log---PostgreSQL connection is closed")
+    return "Log---Analysis completed"
 def expand_contractions(text):
         # Dictionary of English Contractions
     contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
@@ -602,5 +606,4 @@ def make_bigrams(texts,data_words):
     return [bigram_mod[doc] for doc in texts]
 
 if __name__ == '__main__':
-
     app.run(host='0.0.0.0', port=5000, debug=True)
