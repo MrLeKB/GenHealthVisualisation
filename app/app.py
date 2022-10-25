@@ -47,7 +47,7 @@ def request_html(date):
     print("Log---Retrieving html file from {}".format(date))
     dbConnection = engine.connect()
     # Read data from PostgreSQL database table and load into a DataFrame instance
-    dataFrame = pd.read_sql("select * from \"html_table\"", dbConnection)
+    dataFrame = pd.read_sql("select * from \"html_table\" WHERE timestamp = '{}'".format(date), dbConnection)
     dbConnection.close()
     if len(dataFrame)==0:
         return "<div>No Data Available</div>"
