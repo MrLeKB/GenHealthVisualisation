@@ -189,7 +189,7 @@ def scraper(json_req):
     combined_dict = twitter_dict[:10000] + redditposts_dict
     final_df = pd.DataFrame(combined_dict, columns=["Content", "Datetime"])
     
-
+    final_df.drop_duplicates(subset=['Content'],inplace=True)
     #Data Pre-processing
     final_df['original_text'] = final_df.loc[:, 'Content']
 
