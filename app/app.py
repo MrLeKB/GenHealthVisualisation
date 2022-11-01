@@ -98,12 +98,14 @@ def initialise_scraper(user="Scheduler"):
     json_req=checkDate("scraper", user)
     if json_req == False:
         return "Log---:Request rejected as scraped data already exists"
-    scraperThread = threading.Thread(target=scraper, args=(json_req,))
-    try:
-        scraperThread.start()
-    except:
-        print("Log---Scraper failed")
-    return json_req
+    else:
+        scraperThread = threading.Thread(target=scraper, args=(json_req,))
+        try:
+            scraperThread.start()
+        except:
+            print("Log---Scraper failed to initiate due to server error")
+            return "Log---Scraper failed to initiate due to server error"
+        return "Log---Scraper initiated"
 
 @app.route("/backend/analysis/<user>") 
 def initialise_analysis(user="Scheduler"):
@@ -113,16 +115,16 @@ def initialise_analysis(user="Scheduler"):
     scraped_data_exist = checkDate("scraper", user)
     if scraped_data_exist !=False:
         return "Log---:Request rejected as scraped data do not exists"
-    analysisThread = threading.Thread(target=analysis,args=(json_req,))
-    try:
-        analysisThread.start()
-    except:
-        print("Log---Analysis failed")
-    return json_req
+    else:
+        analysisThread = threading.Thread(target=analysis,args=(json_req,))
+        try:
+            analysisThread.start()
+        except:
+            print("Log---Analysis failed to initiate due to server error")
+            return "Log---Analysis failed to initiate due to server error"
+    return "Log---Analysis initiated"
 
 def scraper(json_req):
-    if json_req == False:
-        return "Log---Request rejected as raw data already exists"
     start_date=json_req[0]
     end_date=json_req[1]
     print("Log---Clearing json table to free up storage space")
