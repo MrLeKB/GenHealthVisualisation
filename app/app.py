@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template,send_from_directory
 import threading
 import sqlalchemy
 from sqlalchemy import create_engine
@@ -41,6 +41,14 @@ engine = create_engine('postgresql+psycopg2://pvahbfuxwqhvpq:3837ad2efc075df162e
 @app.route("/")
 def index():
     return render_template("FinalVisualisation.html")
+@app.route("/pyLDAvis/js/ldavis.css")
+def js_css():
+    return send_from_directory('js', "ldavis.css")
+
+@app.route("/pyLDAvis/js/ldavis.js")
+def js_js():
+    return send_from_directory('js', "ldavis.js")
+
 
 @app.route("/request_html/<date>")
 def request_html(date):
