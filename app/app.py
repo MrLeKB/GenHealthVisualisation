@@ -70,7 +70,7 @@ def checkDataExist(typeReq,date):
                         '''.format(table,date)
     df = pd.read_sql(query, dbConnection)
     if len(df)>0:
-        print("Log---{} data for {} already exists".format(typeReq.date))
+        print("Log---{} data for {} already exists".format(typeReq,date))
         return True
     print("Log---{} data for {} do not exist".format(typeReq,date))
     return False
