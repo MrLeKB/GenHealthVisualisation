@@ -70,9 +70,9 @@ def checkDataExist(typeReq,date):
                         '''.format(table,date)
     df = pd.read_sql(query, dbConnection)
     if len(df)>0:
-        print("Log---Data for {} already exists".format(date))
+        print("Log---{} data for {} already exists".format(typeReq.date))
         return True
-    print("Log---Data for {} do not exist".format(date))
+    print("Log---{} data for {} do not exist".format(typeReq,date))
     return False
 
 def clearJsonTable():
@@ -97,7 +97,7 @@ def clearJsonTable():
 def initialise_scraper(user="Scheduler"):
     json_req=checkDate("scraper", user)
     if json_req == False:
-        return "Log---:Request rejected as data already exists"
+        return "Log---:Request rejected as scraped data already exists"
     scraperThread = threading.Thread(target=scraper, args=(json_req,))
     try:
         scraperThread.start()
@@ -109,7 +109,10 @@ def initialise_scraper(user="Scheduler"):
 def initialise_analysis(user="Scheduler"):
     json_req=checkDate("analysis", user)
     if json_req == False:
-        return "Log---:Request rejected as data already exists"
+        return "Log---:Request rejected as analysed data already exists"
+    scraped_data_exist = checkDate("scraper", user)
+    if scraped_data_exist !=False:
+        return "Log---:Request rejected as scraped data do not exists"
     analysisThread = threading.Thread(target=analysis,args=(json_req,))
     try:
         analysisThread.start()
@@ -119,7 +122,7 @@ def initialise_analysis(user="Scheduler"):
 
 def scraper(json_req):
     if json_req == False:
-        return "Log---Request rejected as data already exists"
+        return "Log---Request rejected as raw data already exists"
     start_date=json_req[0]
     end_date=json_req[1]
     print("Log---Clearing json table to free up storage space")
@@ -421,9 +424,11 @@ def request_json(json_req):
     dbConnection = engine.connect()
     dataFrame = pd.read_sql("select * from \"json_table\" where timestamp = '{}'".format(json_req), dbConnection)
     dbConnection.close()
-    print("Log---Retrieved Data from json_table for {}".format(json_req))
     if len(dataFrame)==0:
+        print("Log---No scraped data from json_table for {}".format(json_req))
         return False
+    print("Log---Retrieved scraped data from json_table for {}".format(json_req))
+
     return dataFrame.iloc[0,0]
 def sentiment_analysis(json_df):
     print("Log---Conducting Sentiment Analysis")
