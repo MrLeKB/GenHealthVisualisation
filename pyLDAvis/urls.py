@@ -13,6 +13,7 @@ __all__ = ["D3_URL", "LDAVIS_URL", "LDAVIS_CSS_URL",
 D3_URL = "https://d3js.org/d3.v5.js"
 
 #DEV = 'git' in __version__
+LOCAL_JS_DIR = os.path.join(__path__[0], "js")
 D3_LOCAL = os.path.join(LOCAL_JS_DIR, "d3.v5.min.js")
 
 # Avoid browser caching with @version in the URL.
@@ -23,3 +24,6 @@ D3_LOCAL = os.path.join(LOCAL_JS_DIR, "d3.v5.min.js")
 
 LDAVIS_URL = "/pyLDAvis/js/ldavis.js"
 LDAVIS_CSS_URL = "/pyLDAvis/js/ldavis.css"
+
+LDAVIS_LOCAL = "/pyLDAvis/js/ldavis.js"
+LDAVIS_CSS_LOCAL = "/pyLDAvis/js/ldavis.css"
