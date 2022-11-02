@@ -19,6 +19,8 @@ import gensim
 import gensim.corpora as corpora
 from gensim.utils import simple_preprocess
 from gensim.models import CoherenceModel
+
+
 # spacy for lemmatization
 import spacy
 import pyLDAvis
@@ -605,7 +607,9 @@ def format_topics_sentences(ldamodel, corpus, texts):
     sent_topics_df = pd.concat([sent_topics_df, contents], axis=1)
     return(sent_topics_df)
 def remove_stopwords(texts):
-    return [[word for word in simple_preprocess(str(doc)) if word not in stopwords.words('english')] for doc in texts]
+    extended_stopwords= stopwords.words('english')
+    extended_stopwords.extend(spacy.load('en_core_web_sm').Defaults.stop_words)
+    return [[word for word in simple_preprocess(str(doc)) if word not in extended_stopwords] for doc in texts]
 def get_data_words(json_df):
     #Pre-Processing - Expand contractions, Lowercase and removal of punctuations
 
