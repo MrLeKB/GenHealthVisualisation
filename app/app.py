@@ -454,6 +454,7 @@ def sentiment_analysis(json_df):
     #compound label
     json_df['comp_score'] = json_df['compound'].apply(lambda c: 'pos' if 0.3<c<=1 else("neu" if -0.3<=c<=0.3 else "neg"))
     json_df.dropna(inplace=True)
+    json_df.reset_index(inplace=True,drop=True)
     return json_df
 def clean_text(text):
         #convert to lowercasing, remove non words and remove digits
@@ -574,7 +575,7 @@ def sentimentInfo(optimal_model,corpus,json_df):
     # Format
     df_dominant_topic = df_topic_sents_keywords.reset_index()
     df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Content', 'Datetime', 'orginal_text','score','compound','comp_score']
-
+    df_dominant_topic=df_dominant_topic[df_dominant_topic["orginal_text"].str.contains("http") == False]
     #Dominant Topic Docs
     #Topic Sentiments
     #Create Visualisation
