@@ -340,6 +340,7 @@ def analysis(jsonReq):    # Read data from PostgreSQL database table and load in
     if jsonData ==False:
         return "Log---Analysis failed no data collected for {}".format(jsonReq)
     json_df = pd.read_json(jsonData, orient ='index')
+    json_df=json_df[json_df["original_text"].str.contains("http") == False]
     json_df=sentiment_analysis(json_df)  
     print("Log---Preprocessing data for topic modelling") 
     json_df = contractions(json_df)
@@ -575,7 +576,7 @@ def sentimentInfo(optimal_model,corpus,json_df):
     # Format
     df_dominant_topic = df_topic_sents_keywords.reset_index()
     df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Content', 'Datetime', 'orginal_text','score','compound','comp_score']
-    df_dominant_topic=df_dominant_topic[df_dominant_topic["orginal_text"].str.contains("http") == False]
+    #df_dominant_topic=df_dominant_topic[df_dominant_topic["orginal_text"].str.contains("http") == False]
     #Dominant Topic Docs
     #Topic Sentiments
     #Create Visualisation
