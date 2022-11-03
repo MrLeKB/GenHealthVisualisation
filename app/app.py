@@ -517,7 +517,10 @@ def getOptimalModel(coherence_values,corpus,dictionary):
     model = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                     id2word=dictionary,
                                     num_topics=optimalTopics, 
-                                    random_state=100)
+                                    random_state=100,
+                                    iterations=300,
+                                    alpha="auto"
+                                    )
     return model
 def dominantTopicDoc(df_dominant_topic):
     top_dominant_topic_docs = {}
@@ -607,16 +610,18 @@ def format_topics_sentences(ldamodel, corpus, texts):
     # Add original text to the end of the output
     contents = texts.squeeze()
     sent_topics_df = pd.concat([sent_topics_df, contents], axis=1)
+    sent_topics_df = sent_topics_df[sent_topics_df['Perc_Contribution']<=0.8]
+
     return(sent_topics_df)
 def remove_stopwords(texts):
     extended_stopwords= stopwords.words('english')
     extended_stopwords.extend(spacy.load('en_core_web_sm').Defaults.stop_words)
+    extended_stopwords.extend(['nutrition','health', 'wellness','longevity','like','musk',"good","etc","people"])
     return [[word for word in simple_preprocess(str(doc)) if word not in extended_stopwords] for doc in texts]
 def get_data_words(json_df):
-    #Pre-Processing - Expand contractions, Lowercase and removal of punctuations
-
     data_words = list(sent_to_words(json_df['Content']))
-    return data_words
+    data_words_lemmatised = lemmatization(data_words,allowed_postags=['NOUN', 'ADJ', 'VERB'])
+    return data_words_lemmatised
 def contractions(json_df):
     #Expand Contractions
     json_df['Content'] = json_df['Content'].apply(lambda x:expand_contractions(x))
