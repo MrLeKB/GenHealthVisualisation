@@ -148,12 +148,18 @@ def scraper(json_req):
     for each_keyword in keywords:      
         print("Log---twitter scraping for {}".format(each_keyword))
         start = datetime.datetime.now()      
+        count = 0
         for i,tweet in enumerate(sntwitter.TwitterSearchScraper(each_keyword,'since:%s until:%s lang:en'%(start_date, end_date)).get_items()):
-            if i>8000:
+            if count>8000:
                 break
             dtime = tweet.date
             new_datetime = datetime.datetime.strftime(datetime.datetime.strptime(str(dtime), '%Y-%m-%d %H:%M:%S+00:00'), '%Y-%m-%d %H:%M:%S')
-            twitter_dict.append([tweet.content, new_datetime])
+            if re.findall(r'(http)', tweet.content):
+                pass
+            else:
+                count+=1
+                twitter_dict.append([tweet.content, new_datetime])
+                print(tweet.content)
         
         print("Log---time taken:", datetime.datetime.now()-start)
 
@@ -340,7 +346,6 @@ def analysis(jsonReq):    # Read data from PostgreSQL database table and load in
     if jsonData ==False:
         return "Log---Analysis failed no data collected for {}".format(jsonReq)
     json_df = pd.read_json(jsonData, orient ='index')
-    json_df=json_df[json_df["original_text"].str.contains("http") == False]
     json_df=sentiment_analysis(json_df)  
     print("Log---Preprocessing data for topic modelling") 
     json_df = contractions(json_df)
@@ -579,7 +584,6 @@ def sentimentInfo(optimal_model,corpus,json_df):
     # Format
     df_dominant_topic = df_topic_sents_keywords.reset_index()
     df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Content', 'Datetime', 'orginal_text','score','compound','comp_score']
-    #df_dominant_topic=df_dominant_topic[df_dominant_topic["orginal_text"].str.contains("http") == False]
     #Dominant Topic Docs
     #Topic Sentiments
     #Create Visualisation
