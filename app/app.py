@@ -61,7 +61,6 @@ def request_html(date):
     dbConnection.close()
     if len(dataFrame)==0:
         return "<div>No Data Available</div>"
-    pd.set_option('display.expand_frame_repr', False)
     html_str = dataFrame.iloc[0,0]
 
     print("Log---requested_html")
@@ -577,16 +576,15 @@ def topicSentiments(df_dominant_topic):
         topic_sentiment[i]['neu'] = [neu, top_dominant_topic_docs[i]['neu']]
     return topic_sentiment
 def sentimentInfo(optimal_model,corpus,json_df):
-    #Dominant Topic
-    print("Log---Preparing Dominant Topics")
-    
+    print("Log---Preparing Dominant Topics")    
     df_topic_sents_keywords = format_topics_sentences(ldamodel=optimal_model, corpus=corpus, texts=json_df)
-    # Format
+    #Reset Row Index 
     df_dominant_topic = df_topic_sents_keywords.reset_index()
-    df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Content', 'Datetime', 'orginal_text','score','compound','comp_score']
-    #Dominant Topic Docs
-    #Topic Sentiments
-    #Create Visualisation
+    #Rename Columns
+    df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords',
+                                 'Content', 'Datetime', 'orginal_text','score','compound','comp_score']
+    #Run topicSentiments function and cover results to json string
+    #remove https://
     sentiment = json.dumps(topicSentiments(df_dominant_topic)).replace("https://", "")
     return sentiment
 
