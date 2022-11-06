@@ -346,29 +346,29 @@ def analysis(jsonReq):    # Read data from PostgreSQL database table and load in
         return "Log---Analysis failed no data collected for {}".format(jsonReq)
     json_df = pd.read_json(jsonData, orient ='index')
     json_df=sentiment_analysis(json_df)  
+    
     print("Log---Preprocessing data for topic modelling") 
     json_df = contractions(json_df)
     data_words= get_data_words(json_df)
     data_words_bigrams = make_bigrams(remove_stopwords(data_words),data_words)
     print("Log---Data cleaning phase 2 completed")
+    
     # Create Dictionary
     id2word = corpora.Dictionary(data_words_bigrams)
-    # Create Corpus
-    # Term Document Frequency
+    # Create Corpus - Term Document Frequency
     corpus = [id2word.doc2bow(text) for text in data_words_bigrams]    
+    
     limit=20; start=6; step=2
     # Can take a long time to run.
     coherence_values=[]
     coherence_values = compute_coherence_values(dictionary=id2word, corpus=corpus, texts=data_words_bigrams, limit=limit)
     optimal_model=getOptimalModel(coherence_values,corpus,id2word)
-    # Select the model and print the topics
-    print("Log---Selected optimal topics")
+    print("Log---Selected optimal topics")    
     
     #Merging Sentiment Analysis with Topic Modelling
     sentiment = sentimentInfo(optimal_model,corpus,json_df)
     vis_html= prepareHTML(optimal_model,corpus,id2word,sentiment)
     print("Log---prepared html-------")
-    
     #Send HTML to database
     try:
         # Connect to an existing database
@@ -528,16 +528,14 @@ def getOptimalModel(coherence_values,corpus,dictionary):
     return model
 def dominantTopicDoc(df_dominant_topic):
     top_dominant_topic_docs = {}
-    no_of_topics = list(df_dominant_topic.Dominant_Topic.unique())
-    
+    no_of_topics = list(df_dominant_topic.Dominant_Topic.unique())    
     for topic_no in no_of_topics:
         if not math.isnan(topic_no):
             top_dominant_topic_docs[topic_no] = {}
             #Overall
             df_topic = df_dominant_topic[df_dominant_topic["Dominant_Topic"]==topic_no]
             df_topic.sort_values(by='Topic_Perc_Contrib', ascending=False, inplace=True)
-            top_dominant_topic_docs[topic_no]['mean'] = list(df_topic["orginal_text"][:3])
-            
+            top_dominant_topic_docs[topic_no]['mean'] = list(df_topic["orginal_text"][:3])          
             #Positive
             df_pos = df_dominant_topic[df_dominant_topic["Dominant_Topic"]==topic_no]
             df_pos = df_pos[df_pos["comp_score"]=="pos"]
@@ -563,7 +561,6 @@ def topicSentiments(df_dominant_topic):
     for i in range(len(df_dominant_topic.groupby(['Dominant_Topic']).mean())):
         topic_df=df_dominant_topic[df_dominant_topic['Dominant_Topic']==i]
         mean=topic_df['compound'].mean()
-        sd=topic_df['compound'].std()
         size= len(topic_df)
         pos= round(len(topic_df[(topic_df['compound']>0.3)&(topic_df['compound']<=1)])/size,2)
         neg= round(len(topic_df[(topic_df['compound']>=-1)&(topic_df['compound']<-0.3)]) /size,2)
@@ -583,19 +580,18 @@ def sentimentInfo(optimal_model,corpus,json_df):
     #Rename Columns
     df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords',
                                  'Content', 'Datetime', 'orginal_text','score','compound','comp_score']
-    #Run topicSentiments function and cover results to json string
-    #remove https://
+    #Run topicSentiments function and convert results to json string
+    #remove https:// from original text
     sentiment = json.dumps(topicSentiments(df_dominant_topic)).replace("https://", "")
     return sentiment
 
 def prepareHTML(optimal_model,corpus,id2word,sentiment):
-    vis = gensimvis.prepare(topic_model=optimal_model, corpus = corpus, dictionary = id2word, sentiment=sentiment)
-    vis_html = pyLDAvis.prepared_data_to_html(vis)
+    vis_data = pyLDAvis.gensim_models.prepare(topic_model=optimal_model, corpus = corpus, dictionary = id2word, sentiment=sentiment)
+    vis_html = pyLDAvis.prepared_data_to_html(vis_data)
     return vis_html
 def format_topics_sentences(ldamodel, corpus, texts):
     # Init output
     sent_topics_df = pd.DataFrame()
-
     # Get main topic in each document
     for i, row in enumerate(ldamodel[corpus]):
         row = sorted(row, key=lambda x: (x[1]), reverse=True)
@@ -608,13 +604,12 @@ def format_topics_sentences(ldamodel, corpus, texts):
             else:
                 break
     sent_topics_df.columns = ['Dominant_Topic', 'Perc_Contribution', 'Topic_Keywords']
-
     # Add original text to the end of the output
     contents = texts.squeeze()
     sent_topics_df = pd.concat([sent_topics_df, contents], axis=1)
     sent_topics_df = sent_topics_df[sent_topics_df['Perc_Contribution']<=0.8]
-
     return(sent_topics_df)
+
 def remove_stopwords(texts):
     extended_stopwords= stopwords.words('english')
     extended_stopwords.extend(spacy.load('en_core_web_sm').Defaults.stop_words)

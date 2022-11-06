@@ -75,14 +75,10 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
 
     var pos_colour = "#99d594"
     var neu_colour = "#ffffbf"
-    var neg_colour = "#fc8d59"
+    var neg_colour = "#fc8d59"    
     const sentiment_colour_step = d3.scaleThreshold()
             .domain([-1,-0.3,0.3,1 ])          
             .range( ["None",neg_colour,neu_colour,pos_colour]); // Colour generated from https://colorbrewer2.org/
-
-    // const sentiment_colour_step = d3.scaleThreshold()//Demo purpose only, used sentime_colour_step above for actual sentiment
-    //     .domain([0.5,0.52,0.52,0.54 ])          
-    //     .range( ["None","#fc8d59","#ffffbf","#99d594"]); //
     //////////////////////////////////////////////////////////
 
 
@@ -490,11 +486,6 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             .style("font-size", "16px")
             .text("Top-" + R + " Most Important Terms");
 
-        // title.append("tspan")
-        //     .attr("baseline-shift", "super")
-        //     .attr("font-size", "12px")
-        //     .text("(1)");
-
         // barchart axis adapted from http://bl.ocks.org/mbostock/1166403
         var xAxis = d3.axisTop(x)
             .tickSize(-barheight)
@@ -848,7 +839,6 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             // change opacity and fill of the selected circle
             circle.style.opacity = highlight_opacity;
             circle.style.strokeWidth = highlight_circle_border;
-            //circle.style.fill = color2;
 
             // Remove 'old' bar chart title
             var text = d3.select(to_select + " .bubble-tool");
@@ -1039,10 +1029,6 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
 
             var title = d3.selectAll(to_select + " .bubble-tool")
                 .text("Top-" + R + " Most Important Terms");
-            // title.append("tspan")
-            //     .attr("baseline-shift", "super")
-            //     .attr("font-size", 12)
-            //     .text(1);
 
             // remove the red bars
             d3.selectAll(to_select + " .overlay").remove();
@@ -1050,7 +1036,6 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             //GenHealth Code/////////////////////////
             // remove stacked bar
             d3.selectAll("g.stackedbar").remove()
-            //d3.selectAll("div.RepDocs").remove()
             document.querySelectorAll(".RepDocs").forEach(el => el.remove())
             //////////////////
 
@@ -1216,14 +1201,12 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
             if (rect == null){
                 data=mean
                 title= "Most Representative Posts/Comments"
-
             }else{
                 rect.style.strokeWidth = 3;
                 var d=rect.__data__
                 data=d.doc
                 title= "Most Representative "+d.name+" Posts/Comments"
             }
-
             d3.select("#docSectionTitle")
                 .append("div")
                 .attr("class", "RepDocs")
@@ -1243,23 +1226,11 @@ var LDAvis = function(to_select, data_or_file_name, color1, color2) {
                 .style("word-break", "break-word")
                 .style("margin-bottom","10px")
                 .text(function(d,i) { return (i+1)+". "+ d })
-
         }
         function bar_off(rect){
             if (rect == null) return null;
             rect.style.strokeWidth = 1;
             document.querySelectorAll(".RepDocs").forEach(el => el.remove())
-
-            // var docSection= d3.select("#docSection")
-            //     .selectAll("div")
-            //     .data( d.doc )
-            //     .enter()
-            // docSection.append("div")
-            //     .attr("class", "RepDocs")
-            //     .attr("fill", "black")
-            //     .style("word-break", "break-word")
-            //     .style("margin-bottom","10px")
-            //     .text(function(d) { return d })
         }
 
         // serialize the visualization state using fragment identifiers -- http://en.wikipedia.org/wiki/Fragment_identifier

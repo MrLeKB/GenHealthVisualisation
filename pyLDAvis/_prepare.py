@@ -199,7 +199,6 @@ def _topic_coordinates(sentiment_df,mds, topic_term_dists, topic_proportion, sta
                            , 'sentiment_neu':sentiment_df["neu"]
                            , 'sentiment_neg':sentiment_df["neg"]
                            })
-    # note: cluster (should?) be deprecated soon. See: https://github.com/cpsievert/LDAvis/issues/26
     return mds_df
 
 
@@ -455,10 +454,6 @@ def prepare(topic_sentiment,topic_term_dists, doc_topic_dists, doc_lengths, voca
     token_table = _token_table(topic_info, term_topic_freq, vocab, term_frequency, start_index)
     topic_coordinates = _topic_coordinates(sentiment_df,mds, topic_term_dists, topic_proportion, start_index)
     client_topic_order = [x + start_index for x in topic_order]
-
-    #GenHealth Additional Codes######################    
-    #print(topic_coordinates)
-    ###################################################
     
     return PreparedData(topic_coordinates, topic_info,
                         token_table, R, lambda_step, plot_opts, client_topic_order)
