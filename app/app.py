@@ -204,7 +204,7 @@ def scraper(json_req):
 
     print("Log---length of reddit_dict:", len(redditposts_dict))
 
-    #Combine
+    #Combine twitter and reddit scraped data
     print("Log---Start preprocessing phase 1 of scraped data")
     combined_dict = twitter_dict[:10000] + redditposts_dict
     final_df = pd.DataFrame(combined_dict, columns=["Content", "Datetime"])
@@ -294,20 +294,10 @@ def scraper(json_req):
         # Create a cursor to perform database operations
         cursor = connection.cursor()
         
-        # Executing a SQL query to insert datetime into table
-        
-    #     read_file = open('pre_processed_data.json')
-    #     data = json.load(read_file)
-        
+        # Executing a SQL query to insert datetime into table        
         cursor.execute("INSERT INTO json_table (json_string, timestamp) VALUES (%s, %s)", (data, currDate))
         connection.commit()
         print("1 item inserted successfully")
-
-    #     # Executing a SQL query
-    #     cursor.execute("SELECT json_string FROM json_table;")
-    #     # Fetch result
-    #     record = cursor.fetchone()
-    #     print("You are connected to - ", record, "\n")
 
     except (Exception, Error) as error:
         print("Error while connecting to PostgreSQL", error)
@@ -358,8 +348,9 @@ def analysis(jsonReq):    # Read data from PostgreSQL database table and load in
     # Create Corpus - Term Document Frequency
     corpus = [id2word.doc2bow(text) for text in data_words_bigrams]    
     
-    limit=20; start=6; step=2
     # Can take a long time to run.
+    # Finding number of topics with best coherence value
+    limit=20; start=6; step=2
     coherence_values=[]
     coherence_values = compute_coherence_values(dictionary=id2word, corpus=corpus, texts=data_words_bigrams, limit=limit)
     optimal_model=getOptimalModel(coherence_values,corpus,id2word)
@@ -393,7 +384,7 @@ def analysis(jsonReq):    # Read data from PostgreSQL database table and load in
             print("Log---PostgreSQL connection is closed")
     return "Log---Analysis completed"
 def expand_contractions(text):
-        # Dictionary of English Contractions
+    # Dictionary of English Contractions
     contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
                         "can't": "cannot","can't've": "cannot have",
                         "'cause": "because","could've": "could have","couldn't": "could not",
@@ -473,7 +464,7 @@ def sent_to_words(sentences):
 
 def lemmatization(texts, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
     """https://spacy.io/api/annotation"""
-        # Initiate spacy for lemmatization
+    # Initiate spacy for lemmatization
     nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])  
     texts_out = []
     for sent in texts:
@@ -485,22 +476,16 @@ def compute_coherence_values(dictionary, corpus, texts, limit, start=6, step=2):
     print("Log---Computing coherence scores")
     coherence_values = []
     count=0
-    #model_list = []
     for num_topics in range(start, limit, step):
-        # model = gensim.models.wrappers.LdaMallet(mallet_path, num_topics=num_topics, id2word=id2word)
         model = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                         id2word=dictionary,
                                         num_topics=num_topics, 
                                         random_state=100)
-        #model_list.append(model)
         
         coherencemodel = CoherenceModel(model=model, texts=texts, dictionary=dictionary, coherence='c_v',processes=1)
         coherence_values.append(coherencemodel.get_coherence())
         print("Log---Coherence Score of {} topics is {}".format(count*2+6,coherence_values[count]))
         count+=1
-
-        
-    #return model_list, 
     return coherence_values
 
 def calculate_optimal_coherence(coherence_values):
